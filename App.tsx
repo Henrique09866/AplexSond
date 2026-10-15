@@ -6,13 +6,9 @@ import { usePlayerStore } from './src/store/usePlayerStore';
 import { useLibraryStore } from './src/store/useLibraryStore';
 import { useFoldersStore } from './src/store/useFoldersStore';
 import { usePlaylistsStore } from './src/store/usePlaylistsStore';
-import { useAuthStore } from './src/store/useAuthStore';
 import { setupNotifications, getNotificationsEnabled } from './src/services/notificationService';
 
 export default function App() {
-  const user = useAuthStore((s) => s.user);
-  const authInitialized = useAuthStore((s) => s.initialized);
-
   useEffect(() => {
     let appStateSubscription: any;
     let isInitialized = false;
@@ -50,18 +46,14 @@ export default function App() {
 
     setupApp();
 
+    useLibraryStore.getState().loadTracks();
+    useFoldersStore.getState().load();
+    usePlaylistsStore.getState().hydrate();
+
     return () => {
       appStateSubscription?.remove();
     };
   }, []);
-
-  useEffect(() => {
-    if (!authInitialized) return;
-
-    useLibraryStore.getState().loadTracks();
-    useFoldersStore.getState().load();
-    usePlaylistsStore.getState().hydrate();
-  }, [authInitialized, user?.uid]);
 
   return (
     <SafeAreaProvider>

@@ -116,7 +116,6 @@ export const LibraryScreen: React.FC = () => {
   const playQueue    = usePlayerStore((s) => s.playQueue);
   const pause        = usePlayerStore((s) => s.pause);
 
-  const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
 
   const [query,   setQuery]   = useState('');
@@ -277,7 +276,7 @@ export const LibraryScreen: React.FC = () => {
         >
           <UserAvatar
             photoURL={profile?.photoURL}
-            initial={(profile?.displayName || user?.email || '?')
+            initial={(profile?.displayName || 'AplexSond')
               .trim()
               .charAt(0)
               .toUpperCase()}

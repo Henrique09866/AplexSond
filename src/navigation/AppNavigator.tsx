@@ -24,7 +24,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { navigationRef } from './navigationRef';
 
 import {
-  LoginScreen,
   LibraryScreen,
   RecentsScreen,
   PlaylistsScreen,
@@ -36,7 +35,6 @@ import {
   SettingsScreen,
 } from '../screens';
 import { MiniPlayer } from '../components/MiniPlayer';
-import { useAuthStore } from '../store/useAuthStore';
 import { usePlayerStore } from '../store';
 import {
   COLORS,
@@ -304,12 +302,6 @@ const MainTabs: React.FC = () => (
   </Tab.Navigator>
 );
 
-const AuthStack: React.FC = () => (
-  <Stack.Navigator screenOptions={{ headerShown: false }}>
-    <Stack.Screen name="Login" component={LoginScreen} />
-  </Stack.Navigator>
-);
-
 const AppStack: React.FC = () => (
   <Stack.Navigator
     screenOptions={{
@@ -393,27 +385,9 @@ const AppStack: React.FC = () => (
 );
 
 export const AppNavigator: React.FC = () => {
-  const user = useAuthStore((s) => s.user);
-  const isLoading = useAuthStore((s) => s.isLoading);
-  const initialized = useAuthStore((s) => s.initialized);
-  const listen = useAuthStore((s) => s.listen);
-
-  useEffect(() => {
-    const unsubscribe = listen();
-    return unsubscribe;
-  }, [listen]);
-
-  if (!initialized || isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.accent.primary} />
-      </View>
-    );
-  }
-
   return (
     <NavigationContainer ref={navigationRef} theme={NAV_THEME}>
-      {user ? <AppStack /> : <AuthStack />}
+      <AppStack />
     </NavigationContainer>
   );
 };

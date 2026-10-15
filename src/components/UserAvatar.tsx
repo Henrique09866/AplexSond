@@ -50,28 +50,11 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
           ]}
         />
       ) : (
-        <View
-          style={[
-            styles.placeholder,
-            {
-              width: size,
-              height: size,
-              borderRadius: size / 2,
-            },
-          ]}
-        >
-          <Text
-            style={[
-              styles.initial,
-              {
-                fontSize: size * 0.42,
-                lineHeight: Math.round(size * 0.55),
-              },
-            ]}
-          >
-            {initial}
-          </Text>
-        </View>
+        <Image
+          source={require('../../assets/images/logoaplexsond.png')}
+          resizeMode="contain"
+          style={{ width: size, height: size }}
+        />
       )}
     </View>
   );

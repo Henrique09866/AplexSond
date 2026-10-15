@@ -43,19 +43,16 @@ export const ProfileScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
 
-  const user = useAuthStore((s) => s.user);
   const profile = useAuthStore((s) => s.profile);
   const saveProfile = useAuthStore((s) => s.saveProfile);
   const uploadAvatar = useAuthStore((s) => s.uploadAvatar);
-  const signOut = useAuthStore((s) => s.signOut);
 
   const [uploading, setUploading] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
   const [pendingCrop, setPendingCrop] = useState<PendingCrop | null>(null);
 
-  const displayName = profile?.displayName || '';
-  const email = user?.email ?? '';
-  const initial = (displayName || email).trim().charAt(0).toUpperCase() || '?';
+  const displayName = profile?.displayName || 'AplexSond';
+  const initial = displayName.trim().charAt(0).toUpperCase() || 'A';
 
   // ── Trocar foto (escolhe e abre o ajuste) ──
   const handlePickAvatar = async () => {
@@ -119,19 +116,6 @@ export const ProfileScreen: React.FC = () => {
   };
 
   // ── Sair ──
-  const handleSignOut = () => {
-    Alert.alert('Sair da conta', 'Deseja realmente sair da sua conta?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Sair',
-        style: 'destructive',
-        onPress: () => {
-          signOut().catch(() => {});
-        },
-      },
-    ]);
-  };
-
   return (
     <View style={styles.screen}>
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg.base} />
@@ -172,8 +156,7 @@ export const ProfileScreen: React.FC = () => {
         </TouchableOpacity>
 
         {/* ── Info ── */}
-        <Text style={styles.name}>{displayName || 'Sem nome'}</Text>
-        <Text style={styles.email}>{email}</Text>
+        <Text style={styles.name}>{displayName || 'AplexSond'}</Text>
 
         <TouchableOpacity
           onPress={() => setShowNameModal(true)}
@@ -218,9 +201,7 @@ export const ProfileScreen: React.FC = () => {
         </TouchableOpacity>
 
         {/* ── Sign out ── */}
-        <TouchableOpacity onPress={handleSignOut} style={styles.signOutButton}>
-          <Text style={styles.signOutText}>Sair da conta</Text>
-        </TouchableOpacity>
+
       </View>
 
       {/* ── Edit name modal ── */}

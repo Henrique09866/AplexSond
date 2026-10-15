@@ -14,14 +14,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 
+// Configure estes valores com seu próprio projeto Firebase para habilitar sync em nuvem.
+// No modo padrão do app (offline/local) eles não são usados.
 const firebaseConfig = {
-  apiKey: 'AIzaSyCun7YNOxIHdXJVyzcE6Y-NJ3TsExynTAw',
-  authDomain: 'sondlize-309b4.firebaseapp.com',
-  projectId: 'sondlize-309b4',
-  storageBucket: 'sondlize-309b4.firebasestorage.app',
-  messagingSenderId: '36923020233',
-  appId: '1:36923020233:web:acfd72571e6d84c0ef0e18',
-  measurementId: 'G-DMD6JQYET4',
+  apiKey: 'YOUR_FIREBASE_API_KEY',
+  authDomain: 'YOUR_PROJECT.firebaseapp.com',
+  projectId: 'YOUR_PROJECT_ID',
+  storageBucket: 'YOUR_PROJECT.appspot.com',
+  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
+  appId: 'YOUR_FIREBASE_APP_ID',
 };
 const FIREBASE_STORAGE_BUCKET = firebaseConfig.storageBucket;
 

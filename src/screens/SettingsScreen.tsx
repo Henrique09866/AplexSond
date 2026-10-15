@@ -17,7 +17,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { EqualizerSheet } from '../components/EqualizerSheet';
 import { SleepTimerSheet } from '../components/SleepTimerSheet';
 import { usePlayerStore } from '../store/usePlayerStore';
-import { useAuthStore } from '../store/useAuthStore';
 import { useLibraryStore } from '../store/useLibraryStore';
 import {
   getNotificationsEnabled,
@@ -80,8 +79,6 @@ export const SettingsScreen: React.FC = () => {
   const toggleShuffle = usePlayerStore((s) => s.toggleShuffle);
   const sleepTimerEnd = usePlayerStore((s) => s.sleepTimerEnd);
 
-  const user = useAuthStore((s) => s.user);
-  const signOut = useAuthStore((s) => s.signOut);
   const rescanMusic = useLibraryStore((s) => s.rescanMusic);
 
   const [notificationsOn, setNotificationsOn] = useState(true);
@@ -148,17 +145,6 @@ export const SettingsScreen: React.FC = () => {
     );
   };
 
-  const handleSignOut = () => {
-    Alert.alert('Sair da conta', 'Deseja realmente sair da sua conta?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Sair',
-        style: 'destructive',
-        onPress: () => signOut().catch(() => {}),
-      },
-    ]);
-  };
-
   const sleepStatus = sleepTimerEnd
     ? `Restam ${Math.ceil((sleepTimerEnd - Date.now()) / 60000)} min`
     : 'Desativado';
@@ -189,11 +175,10 @@ export const SettingsScreen: React.FC = () => {
         {/* ── Conta ── */}
         <SectionLabel>CONTA</SectionLabel>
         <View style={styles.group}>
-          <Row label="E-mail" icon="mail-outline" value={user?.email ?? '-'} />
           <Row
             label="Perfil"
             icon="person-circle-outline"
-            value={user?.email ? 'Ver perfil' : undefined}
+            value="Ver perfil"
             onPress={() => navigation.navigate('Profile')}
           />
         </View>
@@ -262,9 +247,7 @@ export const SettingsScreen: React.FC = () => {
         </View>
 
         {/* ── Sign out ── */}
-        <TouchableOpacity onPress={handleSignOut} style={styles.signOutButton}>
-          <Text style={styles.signOutText}>Sair da conta</Text>
-        </TouchableOpacity>
+
       </ScrollView>
 
       <EqualizerSheet visible={showEq} onClose={() => setShowEq(false)} />
