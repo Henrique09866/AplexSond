@@ -10,7 +10,7 @@ import {
   readDirectoryAsync,
 } from 'expo-file-system/legacy';
 import { Audio } from 'expo-av';
-import { ref, uploadBytes, deleteObject } from 'firebase/storage';
+import { ref, uploadBytes, deleteObject } from '../services/firebase';
 import {
   doc,
   setDoc,
@@ -20,7 +20,7 @@ import {
   query,
   orderBy,
   deleteField,
-} from 'firebase/firestore';
+} from '../services/firebase';
 import { Track } from '../core/entities';
 import { extractMetadata } from '../utils/metadataParser';
 import { auth, db, storage } from '../services/firebase';

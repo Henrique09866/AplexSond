@@ -7,7 +7,7 @@ import {
   collection,
   deleteDoc,
   deleteField,
-} from 'firebase/firestore';
+} from '../services/firebase';
 import { Folder } from '../core/entities';
 import { auth, db } from '../services/firebase';
 

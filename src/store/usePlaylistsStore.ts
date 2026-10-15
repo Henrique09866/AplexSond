@@ -8,7 +8,7 @@ import {
   deleteDoc,
   query,
   orderBy,
-} from 'firebase/firestore';
+} from '../services/firebase';
 import { auth, db } from '../services/firebase';
 
 export interface Playlist {

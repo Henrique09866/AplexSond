@@ -1,50 +1,39 @@
-import { initializeApp } from 'firebase/app';
-import {
-  initializeAuth,
-  // @ts-expect-error só exportado no build React Native do SDK
-  getReactNativePersistence,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  updateProfile,
-  User,
-} from 'firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+// Firebase foi removido do app (modo offline/local).
+// Mantemos este módulo como um "stub" para compatibilidade com código
+// legado que ainda referencia essas APIs, sem depender do SDK do Firebase.
+// Nada aqui faz chamadas de rede.
 
-// Configure estes valores com seu próprio projeto Firebase para habilitar sync em nuvem.
-// No modo padrão do app (offline/local) eles não são usados.
-const firebaseConfig = {
-  apiKey: 'YOUR_FIREBASE_API_KEY',
-  authDomain: 'YOUR_PROJECT.firebaseapp.com',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_PROJECT.appspot.com',
-  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-  appId: 'YOUR_FIREBASE_APP_ID',
+export const auth: any = { currentUser: null };
+export const db: any = null;
+export const storage: any = null;
+export const app: any = null;
+export const FIREBASE_STORAGE_BUCKET = '';
+
+const noop = (..._args: any[]) => null;
+
+export const doc = noop;
+export const setDoc = async (..._args: any[]) => null;
+export const getDocs = async (..._args: any[]) => ({ docs: [] as any[], forEach: (_cb: any) => {} });
+export const collection = noop;
+export const deleteDoc = async (..._args: any[]) => null;
+export const deleteField = () => null;
+export const getDoc = async (..._args: any[]) => ({ exists: () => false, data: () => ({} as any) });
+export const query = noop;
+export const orderBy = noop;
+
+export const ref = noop;
+export const uploadBytes = async (..._args: any[]) => null;
+export const deleteObject = async (..._args: any[]) => null;
+
+export const onAuthStateChanged = (_auth: any, cb: any) => {
+  try {
+    if (typeof cb === 'function') cb(null);
+  } catch {}
+  return () => {};
 };
-const FIREBASE_STORAGE_BUCKET = firebaseConfig.storageBucket;
+export const signInWithEmailAndPassword = async () => ({});
+export const createUserWithEmailAndPassword = async () => ({});
+export const signOut = async () => {};
+export const updateProfile = async () => {};
 
-// Persistência local para React Native baseada no AsyncStorage.
-const app = initializeApp(firebaseConfig);
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-export {
-  app,
-  auth,
-  db,
-  storage,
-  FIREBASE_STORAGE_BUCKET,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  firebaseSignOut as signOut,
-  updateProfile,
-};
-
-export type { User };
+export type User = any;

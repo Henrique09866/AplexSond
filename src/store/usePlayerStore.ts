@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer, { Event, PlaybackState } from '@rntp/player';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from '../services/firebase';
 import {
   setupTrackPlayer,
   toMediaItem,

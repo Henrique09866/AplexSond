@@ -1,6 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from './firebase';
 import { auth, db } from './firebase';
 
 const PREFS_KEY = '@sondlize:notificationsEnabled';
