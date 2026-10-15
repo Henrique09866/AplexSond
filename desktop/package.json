@@ -1,0 +1,30 @@
+{
+  "name": "aplexsond-desktop",
+  "version": "1.0.4",
+  "description": "SondLize para Windows (desktop)",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^33.4.0",
+    "electron-builder": "^25.1.0"
+  },
+  "build": {
+    "appId": "com.aplexsond.desktop",
+    "productName": "AplexSond",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "../dist/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "../assets/images/logoaplexsond.png"
+    }
+  }
+}

@@ -5,6 +5,7 @@ import {
   Animated,
   StyleSheet,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -21,7 +22,9 @@ import {
   BottomTabBarProps,
 } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useWindowDimensions } from 'react-native';
 import { navigationRef } from './navigationRef';
+import { useNavigation } from '@react-navigation/native';
 
 import {
   LibraryScreen,
@@ -290,17 +293,130 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
 const Tab   = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-const MainTabs: React.FC = () => (
-  <Tab.Navigator
-    tabBar={(props) => <CustomTabBar {...props} />}
-    screenOptions={{ headerShown: false }}
-  >
-    <Tab.Screen name="Library" component={LibraryScreen} />
-    <Tab.Screen name="Recents" component={RecentsScreen} />
-    <Tab.Screen name="Folders" component={FoldersScreen} />
-    <Tab.Screen name="Playlists" component={PlaylistsScreen} />
-  </Tab.Navigator>
-);
+const DesktopSidebar: React.FC<any> = (props) => {
+  const { state, navigation } = props;
+  const activeIndex = state.index;
+
+  const handlePress = (index: number) => {
+    const route = state.routes[index];
+    const event = navigation.emit({
+      type: 'tabPress',
+      target: route.key,
+      canPreventDefault: true,
+    });
+    if (!event.defaultPrevented && activeIndex !== index) {
+      navigation.navigate(route.name as never);
+    }
+  };
+
+  return (
+    <View style={dStyles.sidebar}>
+      <View style={dStyles.logoBlock}>
+        <Text style={dStyles.logoText}>AplexSond</Text>
+      </View>
+
+      <View style={dStyles.nav}>
+        {TABS.map((tab, index) => {
+          const focused = activeIndex === index;
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              onPress={() => handlePress(index)}
+              style={[dStyles.navItem, focused && dStyles.navItemActive]}
+            >
+              <Ionicons
+                name={focused ? tab.iconActive : tab.icon}
+                size={22}
+                color={focused ? COLORS.accent.primary : COLORS.text.secondary}
+              />
+              <Text
+                style={[dStyles.navLabel, focused && dStyles.navLabelActive]}
+                numberOfLines={1}
+              >
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <View style={dStyles.bottomNav}>
+        <TouchableOpacity
+          style={dStyles.bottomNavItem}
+          onPress={() => navigation.navigate('Profile' as never)}
+        >
+          <Ionicons name="person-circle-outline" size={20} color={COLORS.text.secondary} />
+          <Text style={dStyles.bottomNavLabel}>Perfil</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={dStyles.bottomNavItem}
+          onPress={() => navigation.navigate('Settings' as never)}
+        >
+          <Ionicons name="settings-outline" size={20} color={COLORS.text.secondary} />
+          <Text style={dStyles.bottomNavLabel}>Configurações</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+const MainTabs: React.FC = () => {
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 900;
+
+  const currentTrack = usePlayerStore((s) => s.currentTrack);
+  const isPlaying = usePlayerStore((s) => s.isPlaying);
+  const play = usePlayerStore((s) => s.play);
+  const pause = usePlayerStore((s) => s.pause);
+  const skipNext = usePlayerStore((s) => s.skipNext);
+  const skipPrev = usePlayerStore((s) => s.skipPrev);
+  const position = usePlayerStore((s) => s.position);
+  const duration = usePlayerStore((s) => s.duration);
+  const navigation = useNavigation<any>();
+  const progress = duration > 0 ? position / duration : 0;
+
+  const tabNavigator = (
+    <Tab.Navigator
+      tabBarPosition={isDesktop ? 'left' : 'bottom'}
+      tabBar={
+        isDesktop
+          ? (props) => <DesktopSidebar {...props} />
+          : (props) => <CustomTabBar {...props} />
+      }
+      screenOptions={{ headerShown: false }}
+    >
+      <Tab.Screen name="Library" component={LibraryScreen} />
+      <Tab.Screen name="Recents" component={RecentsScreen} />
+      <Tab.Screen name="Folders" component={FoldersScreen} />
+      <Tab.Screen name="Playlists" component={PlaylistsScreen} />
+    </Tab.Navigator>
+  );
+
+  if (!isDesktop) {
+    return tabNavigator;
+  }
+
+  return (
+    <View style={mStyles.desktopShell}>
+      <View style={mStyles.desktopBody}>{tabNavigator}</View>
+      {currentTrack && (
+        <View style={mStyles.desktopPlayerBar}>
+          <MiniPlayer
+            title={currentTrack.title}
+            artist={currentTrack.artist}
+            artwork={currentTrack.artwork}
+            isPlaying={isPlaying}
+            progress={progress}
+            onPlayPause={isPlaying ? pause : play}
+            onPrev={skipPrev}
+            onNext={skipNext}
+            onPress={() => navigation.navigate('PlayerScene' as never)}
+          />
+        </View>
+      )}
+    </View>
+  );
+};
 
 const AppStack: React.FC = () => (
   <Stack.Navigator
@@ -383,6 +499,89 @@ const AppStack: React.FC = () => (
     />
   </Stack.Navigator>
 );
+
+const dStyles = StyleSheet.create({
+  sidebar: {
+    width: 240,
+    height: '100%',
+    backgroundColor: COLORS.bg.surface,
+    borderRightWidth: StyleSheet.hairlineWidth,
+    borderRightColor: COLORS.border.subtle,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    flexDirection: 'column',
+  },
+  logoBlock: {
+    marginBottom: SPACING.xl,
+    paddingHorizontal: SPACING.sm,
+  },
+  logoText: {
+    ...TYPOGRAPHY.h3,
+    color: COLORS.accent.primary,
+    fontWeight: '700',
+  },
+  nav: {
+    flex: 1,
+    gap: SPACING.xs,
+  },
+  navItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md,
+  },
+  navItemActive: {
+    backgroundColor: COLORS.accent.muted,
+  },
+  navLabel: {
+    ...TYPOGRAPHY.title,
+    color: COLORS.text.secondary,
+  },
+  navLabelActive: {
+    color: COLORS.accent.primary,
+    fontWeight: '600',
+  },
+  bottomNav: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.border.subtle,
+    paddingTop: SPACING.md,
+    gap: SPACING.xs,
+  },
+  bottomNavItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+  },
+  bottomNavLabel: {
+    ...TYPOGRAPHY.label,
+    color: COLORS.text.secondary,
+  },
+});
+
+const mStyles = StyleSheet.create({
+  desktopShell: {
+    flex: 1,
+    flexDirection: 'column',
+    backgroundColor: COLORS.bg.base,
+  },
+  desktopBody: {
+    flex: 1,
+    flexDirection: 'row',
+  },
+  desktopPlayerBar: {
+    height: 88,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: COLORS.border.subtle,
+    backgroundColor: COLORS.bg.base,
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.md,
+  },
+});
 
 export const AppNavigator: React.FC = () => {
   return (
