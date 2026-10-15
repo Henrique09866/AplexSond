@@ -1,9 +1,9 @@
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/52d95f76-edcb-4eb1-bee9-0a99f0b04de7" alt="SondLinze Logo" width="250">
+  <img src="./assets/images/logoaplexsond.png" alt="AplexSond Logo" width="250">
 </p>
 
-<h1 align="center">🎵 SondLinze</h1>
+<h1 align="center">AplexSond</h1>
 
 <p align="center">
   Um player de música moderno para Android desenvolvido com React Native.
