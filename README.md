@@ -87,6 +87,8 @@ O projeto está em desenvolvimento ativo. As funcionalidades principais já fora
 - [x] Refatoração dos controles da UI do Player
 - [x] Implementação de notificações de mídia interativas em background
 - [x] Perfil com foto e nome
+- [x] Edi��o de letras por m�sica
+- [x] Adapta��o autom�tica para desktop (Windows)
 - [ ] Sistema de equalização
 
 ## 📝 Licença
