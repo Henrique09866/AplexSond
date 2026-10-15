@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="./assets/images/logoaplexsond.png" alt="AplexSond Logo" width="250">
+  <img src="./assets/images/logoaplexsond.png" alt="AplexSond Logo" width="250" style="border-radius: 50%; object-fit: cover;">
 </p>
 
 <h1 align="center">AplexSond</h1>
