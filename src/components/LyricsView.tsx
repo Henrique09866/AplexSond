@@ -1,14 +1,15 @@
 import React, { useMemo, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, FlatList, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity } from 'react-native';
 import { parseLrc } from '../services/lyricsParser';
 import { COLORS, TYPOGRAPHY, SPACING } from '../constants/theme';
 
 interface LyricsViewProps {
   lyrics: string;
   position: number; // in seconds
+  onEdit?: () => void;
 }
 
-export const LyricsView: React.FC<LyricsViewProps> = ({ lyrics, position }) => {
+export const LyricsView: React.FC<LyricsViewProps> = ({ lyrics, position, onEdit }) => {
   const parsedLyrics = useMemo(() => parseLrc(lyrics), [lyrics]);
   const flatListRef = useRef<FlatList>(null);
   
@@ -37,6 +38,11 @@ export const LyricsView: React.FC<LyricsViewProps> = ({ lyrics, position }) => {
     return (
       <View style={styles.emptyContainer}>
         <Text style={styles.emptyText}>Sem letras disponíveis</Text>
+        {onEdit && (
+          <TouchableOpacity onPress={onEdit} style={styles.editButton}>
+            <Text style={styles.editButtonText}>Adicionar letras</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   }
@@ -49,6 +55,13 @@ export const LyricsView: React.FC<LyricsViewProps> = ({ lyrics, position }) => {
         keyExtractor={(item, index) => `${item.time}-${index}`}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
+        ListFooterComponent={
+          onEdit ? (
+            <TouchableOpacity onPress={onEdit} style={styles.editFooterButton}>
+              <Text style={styles.editFooterButtonText}>Editar letras</Text>
+            </TouchableOpacity>
+          ) : null
+        }
         onScrollToIndexFailed={(info) => {
           setTimeout(() => {
             if (flatListRef.current) {
@@ -90,6 +103,18 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.body,
     color: COLORS.text.secondary,
   },
+  editButton: {
+    marginTop: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: 999,
+    backgroundColor: COLORS.accent.muted,
+  },
+  editButtonText: {
+    ...TYPOGRAPHY.label,
+    color: COLORS.accent.primary,
+    fontWeight: '600',
+  },
   listContent: {
     paddingVertical: SCREEN_HEIGHT * 0.2, // Padding to allow scrolling the first/last lines to center
     paddingHorizontal: SPACING.lg,
@@ -106,5 +131,19 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     opacity: 1,
     transform: [{ scale: 1.05 }],
+  },
+  editFooterButton: {
+    alignSelf: 'center',
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: 999,
+    backgroundColor: COLORS.bg.highlight,
+  },
+  editFooterButtonText: {
+    ...TYPOGRAPHY.label,
+    color: COLORS.text.secondary,
+    fontWeight: '600',
   },
 });

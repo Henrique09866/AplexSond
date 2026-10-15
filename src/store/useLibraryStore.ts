@@ -35,7 +35,7 @@ interface LibraryState {
   loadTracks: () => Promise<void>;
   importMusic: () => Promise<Track[]>;
   deleteTrack: (id: string) => Promise<void>;
-  updateTrack: (trackId: string, updates: Partial<Pick<Track, 'title' | 'artist' | 'folderId' | 'folderSortOrder' | 'lastPlayedAt'>>) => Promise<void>;
+  updateTrack: (trackId: string, updates: Partial<Pick<Track, 'title' | 'artist' | 'folderId' | 'folderSortOrder' | 'lastPlayedAt' | 'lyrics'>>) => Promise<void>;
   markTrackPlayed: (trackId: string) => Promise<void>;
   updateTrackFolder: (trackId: string, folderId: string | undefined) => Promise<void>;
   reorderFolderTracks: (folderId: string, from: number, to: number) => Promise<void>;

@@ -9,6 +9,8 @@ import {
   Animated,
   PanResponder,
   Dimensions,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -177,6 +179,7 @@ export const PlayerScreen: React.FC = () => {
 
   const tracks            = useLibraryStore((s) => s.tracks);
   const updateTrackFolder = useLibraryStore((s) => s.updateTrackFolder);
+  const updateTrack       = useLibraryStore((s) => s.updateTrack);
   const loadFolders       = useFoldersStore((s) => s.load);
 
   const play         = usePlayerStore((s) => s.play);
@@ -193,6 +196,8 @@ export const PlayerScreen: React.FC = () => {
   const [showEq, setShowEq] = useState(false);
   const [showSleepTimer, setShowSleepTimer] = useState(false);
   const [showMoveFolder, setShowMoveFolder] = useState(false);
+  const [showLyricsEditor, setShowLyricsEditor] = useState(false);
+  const [lyricsDraft, setLyricsDraft] = useState('');
 
   const progress = duration > 0 ? position / duration : 0;
 
@@ -214,6 +219,18 @@ export const PlayerScreen: React.FC = () => {
     },
     [currentTrack, updateTrackFolder],
   );
+
+  const openLyricsEditor = useCallback(() => {
+    setLyricsDraft(currentTrack?.lyrics || '');
+    setShowLyricsEditor(true);
+  }, [currentTrack]);
+
+  const handleSaveLyrics = useCallback(async () => {
+    if (currentTrack) {
+      await updateTrack(currentTrack.id, { lyrics: lyricsDraft });
+    }
+    setShowLyricsEditor(false);
+  }, [currentTrack, lyricsDraft, updateTrack]);
 
   // ── Cover scale animation (pulses when playing) ──
   const coverScale = useRef(new Animated.Value(isPlaying ? 1 : 0.88)).current;
@@ -310,7 +327,7 @@ export const PlayerScreen: React.FC = () => {
       {/* ── Cover art ou Lyrics ── */}
       <View style={styles.coverContainer}>
         {showLyrics ? (
-          <LyricsView lyrics={currentTrack.lyrics || ''} position={position} />
+          <LyricsView lyrics={currentTrack.lyrics || ''} position={position} onEdit={openLyricsEditor} />
         ) : (
           <Animated.View
             style={[
@@ -403,7 +420,16 @@ export const PlayerScreen: React.FC = () => {
           <Ionicons name="options-outline" size={24} color={COLORS.text.secondary} />
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setShowLyrics(!showLyrics)} style={[styles.toolBtn, showLyrics && styles.toolBtnActive]}>
+        <TouchableOpacity
+          onPress={() => {
+            if (currentTrack?.lyrics) {
+              setShowLyrics(!showLyrics);
+            } else {
+              openLyricsEditor();
+            }
+          }}
+          style={[styles.toolBtn, showLyrics && styles.toolBtnActive]}
+        >
           <Ionicons name="text-outline" size={24} color={showLyrics ? COLORS.white : COLORS.text.secondary} />
         </TouchableOpacity>
 
@@ -414,6 +440,43 @@ export const PlayerScreen: React.FC = () => {
 
       <EqualizerSheet visible={showEq} onClose={() => setShowEq(false)} />
       <SleepTimerSheet visible={showSleepTimer} onClose={() => setShowSleepTimer(false)} />
+
+      {/* �"?�"? Editor de letras �"?�"? */}
+      <Modal
+        visible={showLyricsEditor}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowLyricsEditor(false)}
+      >
+        <View style={styles.lyricsModalBackdrop}>
+          <View style={styles.lyricsModalSheet}>
+            <Text style={styles.lyricsModalTitle}>Letras da m��sica</Text>
+            <TextInput
+              style={styles.lyricsModalInput}
+              value={lyricsDraft}
+              onChangeText={setLyricsDraft}
+              placeholder="Cole as letras aqui (texto ou LRC)..."
+              placeholderTextColor={COLORS.text.tertiary}
+              multiline
+              textAlignVertical="top"
+            />
+            <View style={styles.lyricsModalButtons}>
+              <TouchableOpacity
+                style={[styles.lyricsModalButton, styles.lyricsModalButtonGhost]}
+                onPress={() => setShowLyricsEditor(false)}
+              >
+                <Text style={styles.lyricsModalButtonGhostText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.lyricsModalButton, styles.lyricsModalButtonPrimary]}
+                onPress={handleSaveLyrics}
+              >
+                <Text style={styles.lyricsModalButtonPrimaryText}>Salvar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <SelectFolderModal
         visible={showMoveFolder}
@@ -574,6 +637,61 @@ const styles = StyleSheet.create({
     bottom: 6,
     right: 6,
     fontSize: 10,
+    fontWeight: '700',
+  },
+  lyricsModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  lyricsModalSheet: {
+    backgroundColor: COLORS.bg.overlay,
+    borderTopLeftRadius: RADIUS.sheet,
+    borderTopRightRadius: RADIUS.sheet,
+    padding: SPACING.screenPadding,
+    maxHeight: SCREEN_HEIGHT * 0.85,
+  },
+  lyricsModalTitle: {
+    ...TYPOGRAPHY.h3,
+    textAlign: 'center',
+    marginBottom: SPACING.md,
+  },
+  lyricsModalInput: {
+    ...TYPOGRAPHY.body,
+    backgroundColor: COLORS.bg.input,
+    color: COLORS.text.primary,
+    borderRadius: RADIUS.input,
+    borderWidth: 1,
+    borderColor: COLORS.border.default,
+    padding: SPACING.md,
+    minHeight: 200,
+    maxHeight: SCREEN_HEIGHT * 0.6,
+  },
+  lyricsModalButtons: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+  },
+  lyricsModalButton: {
+    flex: 1,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.button,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  lyricsModalButtonGhost: {
+    backgroundColor: COLORS.bg.highlight,
+  },
+  lyricsModalButtonPrimary: {
+    backgroundColor: COLORS.accent.primary,
+  },
+  lyricsModalButtonGhostText: {
+    ...TYPOGRAPHY.title,
+    color: COLORS.text.secondary,
+  },
+  lyricsModalButtonPrimaryText: {
+    ...TYPOGRAPHY.title,
+    color: COLORS.text.onAccent,
     fontWeight: '700',
   },
 });
