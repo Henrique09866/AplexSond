@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "sondlize",
+    "name": "AplexSond",
     "slug": "sondlize",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "orientation": "portrait",
-    "icon": "./assets/images/sondlize-logo-v2.png",
+    "icon": "./assets/images/logoaplexsond.png",
     "scheme": "sondlize",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -18,9 +18,9 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0A0A0A",
-        "foregroundImage": "./assets/images/sondlize-logo-v2.png",
-        "backgroundImage": "./assets/images/sondlize-logo-v2.png",
-        "monochromeImage": "./assets/images/sondlize-logo-v2.png"
+        "foregroundImage": "./assets/images/logoaplexsond.png",
+        "backgroundImage": "./assets/images/logoaplexsond.png",
+        "monochromeImage": "./assets/images/logoaplexsond.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -40,7 +40,7 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/sondlize-logo-v2.png",
+          "image": "./assets/images/logoaplexsond.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#0A0A0A",
@@ -52,7 +52,7 @@
       [
         "expo-notifications",
         {
-          "icon": "./assets/images/sondlize-logo-v2.png",
+          "icon": "./assets/images/logoaplexsond.png",
           "color": "#FF1200",
           "defaultChannel": "playback",
           "sounds": []

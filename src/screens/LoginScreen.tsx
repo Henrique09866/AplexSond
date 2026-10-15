@@ -100,7 +100,7 @@ export const LoginScreen: React.FC = () => {
           <View style={styles.logoGlow} />
           <View style={styles.logoFrame}>
             <Image
-              source={require('../../assets/images/sondlize-logo-v2.png')}
+              source={require('../../assets/images/logoaplexsond.png')}
               style={styles.logo}
               resizeMode="cover"
             />
