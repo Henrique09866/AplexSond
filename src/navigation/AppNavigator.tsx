@@ -383,7 +383,10 @@ const MainTabs: React.FC = () => {
           ? (props) => <DesktopSidebar {...props} />
           : (props) => <CustomTabBar {...props} />
       }
-      screenOptions={{ headerShown: false }}
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: isDesktop ? { width: 240, borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: COLORS.border.subtle } : undefined,
+      }}
     >
       <Tab.Screen name="Library" component={LibraryScreen} />
       <Tab.Screen name="Recents" component={RecentsScreen} />
