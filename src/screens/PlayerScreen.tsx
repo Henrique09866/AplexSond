@@ -11,9 +11,12 @@ import {
   Dimensions,
   Modal,
   TextInput,
+  Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 
 import { LyricsView } from '../components/LyricsView';
@@ -35,8 +38,15 @@ import {
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const COVER_SIZE = SCREEN_WIDTH - SPACING.screenPadding * 2;
+const DESKTOP_COVER_SIZE = 360;
 
-// ─── Icon helpers (no external dep) ──────────────────────────
+// ─── Detecta desktop (Electron/web) ────────────────────────────
+const useIsDesktop = (): boolean => {
+  const { width } = useWindowDimensions();
+  return Platform.OS === 'web' && width >= 900;
+};
+
+// ─── Icon helpers (sem dep externa) ────────────────────────────
 
 const IconPrev = ({ color = COLORS.text.primary, size = 24 }) => (
   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -66,7 +76,7 @@ const IconPause = ({ color = COLORS.text.inverse, size = 26 }) => (
   </View>
 );
 
-// ─── Time formatter (accepts SECONDS from useProgress) ──────
+// ─── Formatação de tempo (segundos) ────────────────────────────
 
 const fmt = (secs: number): string => {
   const total = Math.floor(secs);
@@ -75,7 +85,10 @@ const fmt = (secs: number): string => {
   return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
-// ─── Seek slider ─────────────────────────────────────────────
+// ─── Slider de busca (funciona no celular e no PC) ─────────────
+// Usa @react-native-community/slider em vez de PanResponder:
+// - no celular o dedo não "reseta" a posição enquanto arrasta;
+// - no PC funciona com mouse naturalmente.
 
 const SeekSlider: React.FC<{
   progress: number;  // 0–1
@@ -83,65 +96,40 @@ const SeekSlider: React.FC<{
   position: number;
   onSeek: (secs: number) => void;
 }> = ({ progress, duration, position, onSeek }) => {
-  const TRACK_WIDTH = SCREEN_WIDTH - SPACING.screenPadding * 2;
   const [dragging, setDragging] = useState(false);
-  const [dragVal, setDragVal]   = useState(0);
-  const thumbScale              = useRef(new Animated.Value(1)).current;
-  const dragValRef              = useRef(0);
+  const [preview, setPreview]   = useState(0);
+  const previewRef              = useRef(0);
 
-  const expandThumb = () =>
-    Animated.spring(thumbScale, { toValue: 1.5, tension: 80, friction: 10, useNativeDriver: true }).start();
-  const shrinkThumb = () =>
-    Animated.spring(thumbScale, { toValue: 1, tension: 80, friction: 10, useNativeDriver: true }).start();
-
-  const pan = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onPanResponderGrant: (e, gestureState) => {
-        setDragging(true);
-        expandThumb();
-        const startX = gestureState.x0 - SPACING.screenPadding;
-        const v = Math.max(0, Math.min(startX / TRACK_WIDTH, 1));
-        dragValRef.current = v;
-        setDragVal(v);
-      },
-      onPanResponderMove: (e, gestureState) => {
-        const currentX = gestureState.moveX - SPACING.screenPadding;
-        const v = Math.max(0, Math.min(currentX / TRACK_WIDTH, 1));
-        dragValRef.current = v;
-        setDragVal(v);
-      },
-      onPanResponderRelease: () => {
-        shrinkThumb();
-        setDragging(false);
-        onSeek(dragValRef.current * duration);
-      },
-    }),
-  ).current;
-
-  const fill = dragging ? dragVal : progress;
-  const displayPos = dragging ? dragVal * duration : position;
+  // Enquanto o usuário está arrastando, mostra o valor prévio do dedo/mouse
+  // e ignora as atualizações de posição da música. Isso evita o "pulou de volta".
+  const showProgress = dragging ? preview : progress;
+  const showPosition = dragging ? preview * duration : position;
 
   return (
     <View style={sliderStyles.wrapper}>
-      {/* Track */}
-      <View style={sliderStyles.track} {...pan.panHandlers}>
-        <View style={[sliderStyles.fill, { width: `${fill * 100}%` }]} />
-        {/* Thumb */}
-        <Animated.View
-          style={[
-            sliderStyles.thumb,
-            {
-              left: `${fill * 100}%`,
-              transform: [{ scale: thumbScale }, { translateX: -SIZES.player.sliderThumb / 2 }],
-            },
-          ]}
-        />
-      </View>
+      <Slider
+        style={sliderStyles.track}
+        minimumValue={0}
+        maximumValue={1}
+        value={showProgress}
+        minimumTrackTintColor={COLORS.accent.primary}
+        maximumTrackTintColor={COLORS.border.default}
+        thumbTintColor={COLORS.white}
+        onSlidingStart={() => setDragging(true)}
+        onValueChange={(v) => {
+          setPreview(v);
+          previewRef.current = v;
+        }}
+        onSlidingComplete={(v) => {
+          previewRef.current = v;
+          setDragging(false);
+          onSeek(v * duration);
+        }}
+      />
 
-      {/* Time labels */}
+      {/* Labels de tempo */}
       <View style={sliderStyles.timeRow}>
-        <Text style={sliderStyles.time}>{fmt(displayPos)}</Text>
+        <Text style={sliderStyles.time}>{fmt(showPosition)}</Text>
         <Text style={sliderStyles.time}>{fmt(duration)}</Text>
       </View>
     </View>
@@ -150,30 +138,21 @@ const SeekSlider: React.FC<{
 
 const sliderStyles = StyleSheet.create({
   wrapper:  { paddingHorizontal: SPACING.screenPadding, gap: SPACING.sm },
-  track:    { height: 4, backgroundColor: COLORS.border.default, borderRadius: 2, position: 'relative', justifyContent: 'center' },
-  fill:     { height: 4, backgroundColor: COLORS.accent.primary, borderRadius: 2, position: 'absolute', left: 0 },
-  thumb: {
-    position: 'absolute',
-    width: SIZES.player.sliderThumb,
-    height: SIZES.player.sliderThumb,
-    borderRadius: SIZES.player.sliderThumb / 2,
-    backgroundColor: COLORS.white,
-    top: -(SIZES.player.sliderThumb / 2 - 2),
-    ...SHADOWS.sm,
-  },
+  track:    { height: 52 }, // espaço para o polegar não encostar nos labels
   timeRow:  { flexDirection: 'row', justifyContent: 'space-between' },
   time:     { ...TYPOGRAPHY.numeric, color: COLORS.text.tertiary },
 });
 
-// ─── Main Screen ──────────────────────────────────────────────
+// ─── Tela principal ─────────────────────────────────────────────
 
 export const PlayerScreen: React.FC = () => {
   const insets     = useSafeAreaInsets();
+  const isDesktop  = useIsDesktop();
   const navigation = useNavigation<any>();
 
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const isPlaying    = usePlayerStore((s) => s.isPlaying);
-  
+
   const position = usePlayerStore((s) => s.position);
   const duration = usePlayerStore((s) => s.duration);
 
@@ -192,7 +171,7 @@ export const PlayerScreen: React.FC = () => {
   const toggleShuffle = usePlayerStore((s) => s.toggleShuffle);
   const cycleRepeat   = usePlayerStore((s) => s.cycleRepeat);
 
-  const [showLyrics, setShowLyrics] = useState(false);
+  const [showLyrics, setShowLyrics] = useState(() => isDesktop && !!currentTrack?.lyrics);
   const [showEq, setShowEq] = useState(false);
   const [showSleepTimer, setShowSleepTimer] = useState(false);
   const [showMoveFolder, setShowMoveFolder] = useState(false);
@@ -201,7 +180,7 @@ export const PlayerScreen: React.FC = () => {
 
   const progress = duration > 0 ? position / duration : 0;
 
-  // ── Move track to folder ──
+  // ── Mover faixa para pasta ──
   const currentFolderId = currentTrack
     ? tracks.find((t) => t.id === currentTrack.id)?.folderId
     : undefined;
@@ -232,7 +211,7 @@ export const PlayerScreen: React.FC = () => {
     setShowLyricsEditor(false);
   }, [currentTrack, lyricsDraft, updateTrack]);
 
-  // ── Cover scale animation (pulses when playing) ──
+  // ── Animação da capa (pulsação quando toca) ──
   const coverScale = useRef(new Animated.Value(isPlaying ? 1 : 0.88)).current;
 
   React.useEffect(() => {
@@ -240,11 +219,11 @@ export const PlayerScreen: React.FC = () => {
       toValue: isPlaying ? 1 : 0.88,
       tension: 40,
       friction: 10,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, [coverScale, isPlaying]);
 
-  // ── Swipe down to close ──
+  // ── Deslizar pra baixo fecha ──
   const translateY = useRef(new Animated.Value(0)).current;
   const pan = useRef(
     PanResponder.create({
@@ -257,21 +236,21 @@ export const PlayerScreen: React.FC = () => {
           Animated.timing(translateY, {
             toValue: SCREEN_HEIGHT,
             duration: 250,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
           }).start(() => navigation.goBack());
         } else {
           Animated.spring(translateY, {
             toValue: 0,
             tension: 60,
             friction: 12,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
           }).start();
         }
       },
     }),
   ).current;
 
-  // ── Safe navigation goBack if track becomes null ──
+  // ── Volta atrás se a faixa sumir ──
   React.useEffect(() => {
     if (!currentTrack && navigation.canGoBack()) {
       navigation.goBack();
@@ -282,6 +261,235 @@ export const PlayerScreen: React.FC = () => {
     return null;
   }
 
+  // ── Tamanho da capa (maior e fixo no PC, preenche a tela no celular) ──
+  const coverSize = isDesktop ? DESKTOP_COVER_SIZE : COVER_SIZE;
+
+  // ── Conteúdo da capa ──
+  const coverContent = (
+    <Animated.View
+      style={[
+        styles.coverWrapper,
+        { width: coverSize, height: coverSize },
+        { transform: [{ scale: coverScale }] },
+      ]}
+    >
+      {currentTrack.artwork ? (
+        <Image
+          source={{ uri: currentTrack.artwork }}
+          style={[styles.cover, { width: coverSize, height: coverSize }]}
+        />
+      ) : (
+        <View style={[styles.coverFallback, { width: coverSize, height: coverSize }]}>
+          <Text style={[styles.coverInitial, { fontSize: coverSize * 0.35 }]}>
+            {currentTrack.title.charAt(0).toUpperCase()}
+          </Text>
+        </View>
+      )}
+    </Animated.View>
+  );
+
+  const renderLyricsPanel = () => (
+    <LyricsView
+      lyrics={currentTrack.lyrics || ''}
+      position={position}
+      onEdit={openLyricsEditor}
+    />
+  );
+
+  // ═══════════════════════════════════════════════════════════════
+  // LAYOUT PARA PC (capa + letras lado a lado)
+  // ═══════════════════════════════════════════════════════════════
+  if (isDesktop) {
+    return (
+      <Animated.View
+        style={[styles.screen, { transform: [{ translateY }] }]}
+        {...pan.panHandlers}
+      >
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.bg.base} />
+
+        {/* Fundo levemente tintado com a cor da capa */ }
+        <View style={styles.bgTint} />
+
+        {/* Top bar */}
+        <View style={[styles.topBar, { paddingTop: insets.top + SPACING.sm }]}>
+          <View style={styles.handle} />
+
+          <View style={styles.topBarRow}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={styles.topBarButton}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Ionicons name="chevron-down" size={28} color={COLORS.text.primary} />
+            </TouchableOpacity>
+
+            <View style={styles.topBarCenter}>
+              <Text style={styles.topBarLabel}>TOCANDO AGORA</Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={handleOpenMoveFolder}
+              style={styles.topBarButton}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Ionicons
+                name={currentFolderId ? 'folder' : 'folder-outline'}
+                size={22}
+                color={currentFolderId ? COLORS.accent.primary : COLORS.text.primary}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Linha: capa à esquerda | letras à direita */}
+        <View style={styles.desktopRow}>
+          <View style={styles.desktopCoverCol}>{coverContent}</View>
+
+          {showLyrics && currentTrack.lyrics ? (
+            <View style={styles.desktopLyricsCol}>{renderLyricsPanel()}</View>
+          ) : null}
+        </View>
+
+        {/* Info da faixa */}
+        <View style={styles.trackInfo}>
+          <Text style={styles.trackTitle} numberOfLines={1}>
+            {currentTrack.title}
+          </Text>
+          <Text style={styles.trackArtist} numberOfLines={1}>
+            {currentTrack.artist ?? 'Artista desconhecido'}
+          </Text>
+        </View>
+
+        {/* Slider de busca */}
+        <SeekSlider
+          progress={progress}
+          duration={duration}
+          position={position}
+          onSeek={seekTo}
+        />
+
+        {/* Controles */}
+        <View style={styles.controls}>
+          <TouchableOpacity
+            onPress={skipPrev}
+            style={styles.sideControl}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <IconPrev size={22} color={COLORS.text.primary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={isPlaying ? pause : play}
+            style={styles.playButton}
+            activeOpacity={0.85}
+          >
+            {isPlaying ? (
+              <IconPause size={26} color={COLORS.text.inverse} />
+            ) : (
+              <IconPlay size={28} color={COLORS.text.inverse} />
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={skipNext}
+            style={styles.sideControl}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <IconNext size={22} color={COLORS.text.primary} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Ferramentas extras */}
+        <View style={styles.toolsRow}>
+          <TouchableOpacity onPress={toggleShuffle} style={[styles.toolBtn, shuffleEnabled && styles.toolBtnActive]}>
+            <Ionicons name="shuffle-outline" size={24} color={shuffleEnabled ? COLORS.white : COLORS.text.secondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={cycleRepeat} style={[styles.toolBtn, repeatMode !== 'off' && styles.toolBtnActive]}>
+            <Ionicons name={repeatMode === 'one' ? "repeat-outline" : "repeat-outline"} size={24} color={repeatMode !== 'off' ? COLORS.white : COLORS.text.secondary} />
+            {repeatMode === 'one' && (
+              <Text style={[styles.repeatBadge, { color: COLORS.white }]}>1</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => setShowEq(true)} style={styles.toolBtn}>
+            <Ionicons name="options-outline" size={24} color={COLORS.text.secondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => {
+              if (currentTrack?.lyrics) {
+                setShowLyrics(!showLyrics);
+              } else {
+                openLyricsEditor();
+              }
+            }}
+            style={[styles.toolBtn, showLyrics && styles.toolBtnActive]}
+          >
+            <Ionicons name="text-outline" size={24} color={showLyrics ? COLORS.white : COLORS.text.secondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={() => setShowSleepTimer(true)} style={styles.toolBtn}>
+            <Ionicons name="timer-outline" size={24} color={COLORS.text.secondary} />
+          </TouchableOpacity>
+        </View>
+
+        <EqualizerSheet visible={showEq} onClose={() => setShowEq(false)} />
+        <SleepTimerSheet visible={showSleepTimer} onClose={() => setShowSleepTimer(false)} />
+
+        {/* Editor de letras */}
+        <Modal
+          visible={showLyricsEditor}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setShowLyricsEditor(false)}
+        >
+          <View style={styles.lyricsModalBackdrop}>
+            <View style={styles.lyricsModalSheet}>
+              <Text style={styles.lyricsModalTitle}>Letras da música</Text>
+              <TextInput
+                style={styles.lyricsModalInput}
+                value={lyricsDraft}
+                onChangeText={setLyricsDraft}
+                placeholder="Cole as letras aqui (texto ou LRC)..."
+                placeholderTextColor={COLORS.text.tertiary}
+                multiline
+                textAlignVertical="top"
+              />
+              <View style={styles.lyricsModalButtons}>
+                <TouchableOpacity
+                  style={[styles.lyricsModalButton, styles.lyricsModalButtonGhost]}
+                  onPress={() => setShowLyricsEditor(false)}
+                >
+                  <Text style={styles.lyricsModalButtonGhostText}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.lyricsModalButton, styles.lyricsModalButtonPrimary]}
+                  onPress={handleSaveLyrics}
+                >
+                  <Text style={styles.lyricsModalButtonPrimaryText}>Salvar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        <SelectFolderModal
+          visible={showMoveFolder}
+          onClose={() => setShowMoveFolder(false)}
+          onSelect={handleMoveToFolder}
+          currentFolderId={currentFolderId}
+        />
+
+        {/* Spacer inferior */}
+        <View style={{ height: insets.bottom + SPACING.lg }} />
+      </Animated.View>
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // LAYOUT PARA CELULAR (capa cheia, letras por toggle)
+  // ═══════════════════════════════════════════════════════════════
   return (
     <Animated.View
       style={[styles.screen, { transform: [{ translateY }] }]}
@@ -289,12 +497,11 @@ export const PlayerScreen: React.FC = () => {
     >
       <StatusBar barStyle="light-content" backgroundColor={COLORS.bg.base} />
 
-      {/* ── Background tint from artwork color (static dark) ── */}
+      {/* Fundo tintado */ }
       <View style={styles.bgTint} />
 
-      {/* ── Top bar ── */}
+      {/* Top bar */}
       <View style={[styles.topBar, { paddingTop: insets.top + SPACING.sm }]}>
-        {/* Drag handle */}
         <View style={styles.handle} />
 
         <View style={styles.topBarRow}>
@@ -324,34 +531,16 @@ export const PlayerScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* ── Cover art ou Lyrics ── */}
+      {/* Capa ou Letras (toggle de tela cheia) */}
       <View style={styles.coverContainer}>
         {showLyrics ? (
           <LyricsView lyrics={currentTrack.lyrics || ''} position={position} onEdit={openLyricsEditor} />
         ) : (
-          <Animated.View
-            style={[
-              styles.coverWrapper,
-              { transform: [{ scale: coverScale }] },
-            ]}
-          >
-            {currentTrack.artwork ? (
-              <Image
-                source={{ uri: currentTrack.artwork }}
-                style={styles.cover}
-              />
-            ) : (
-              <View style={styles.coverFallback}>
-                <Text style={styles.coverInitial}>
-                  {currentTrack.title.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-            )}
-          </Animated.View>
+          coverContent
         )}
       </View>
 
-      {/* ── Track info ── */}
+      {/* Info da faixa */}
       <View style={styles.trackInfo}>
         <Text style={styles.trackTitle} numberOfLines={1}>
           {currentTrack.title}
@@ -361,7 +550,7 @@ export const PlayerScreen: React.FC = () => {
         </Text>
       </View>
 
-      {/* ── Seek slider ── */}
+      {/* Slider de busca */}
       <SeekSlider
         progress={progress}
         duration={duration}
@@ -369,9 +558,8 @@ export const PlayerScreen: React.FC = () => {
         onSeek={seekTo}
       />
 
-      {/* ── Controls ── */}
+      {/* Controles */}
       <View style={styles.controls}>
-        {/* Prev */}
         <TouchableOpacity
           onPress={skipPrev}
           style={styles.sideControl}
@@ -380,7 +568,6 @@ export const PlayerScreen: React.FC = () => {
           <IconPrev size={22} color={COLORS.text.primary} />
         </TouchableOpacity>
 
-        {/* Play / Pause */}
         <TouchableOpacity
           onPress={isPlaying ? pause : play}
           style={styles.playButton}
@@ -393,7 +580,6 @@ export const PlayerScreen: React.FC = () => {
           )}
         </TouchableOpacity>
 
-        {/* Next */}
         <TouchableOpacity
           onPress={skipNext}
           style={styles.sideControl}
@@ -403,7 +589,7 @@ export const PlayerScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      {/* ── Extra Tools (Shuffle, Repeat, EQ, Lyrics, Timer) ── */}
+      {/* Ferramentas extras */}
       <View style={styles.toolsRow}>
         <TouchableOpacity onPress={toggleShuffle} style={[styles.toolBtn, shuffleEnabled && styles.toolBtnActive]}>
           <Ionicons name="shuffle-outline" size={24} color={shuffleEnabled ? COLORS.white : COLORS.text.secondary} />
@@ -441,7 +627,7 @@ export const PlayerScreen: React.FC = () => {
       <EqualizerSheet visible={showEq} onClose={() => setShowEq(false)} />
       <SleepTimerSheet visible={showSleepTimer} onClose={() => setShowSleepTimer(false)} />
 
-      {/* �"?�"? Editor de letras �"?�"? */}
+      {/* Editor de letras */}
       <Modal
         visible={showLyricsEditor}
         transparent
@@ -450,7 +636,7 @@ export const PlayerScreen: React.FC = () => {
       >
         <View style={styles.lyricsModalBackdrop}>
           <View style={styles.lyricsModalSheet}>
-            <Text style={styles.lyricsModalTitle}>Letras da m��sica</Text>
+            <Text style={styles.lyricsModalTitle}>Letras da música</Text>
             <TextInput
               style={styles.lyricsModalInput}
               value={lyricsDraft}
@@ -485,13 +671,13 @@ export const PlayerScreen: React.FC = () => {
         currentFolderId={currentFolderId}
       />
 
-      {/* ── Bottom spacer ── */}
+      {/* Spacer inferior */}
       <View style={{ height: insets.bottom + SPACING.lg }} />
     </Animated.View>
   );
 };
 
-// ─── Styles ──────────────────────────────────────────────────
+// ─── Estilos ───────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   screen: {
@@ -540,7 +726,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
 
-  // ── Cover ──
+  // ── Capa ──
   coverContainer: {
     flex: 1,
     alignItems: 'center',
@@ -549,31 +735,43 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xl,
   },
   coverWrapper: {
-    width: COVER_SIZE,
-    height: COVER_SIZE,
     borderRadius: RADIUS.coverLarge,
     ...SHADOWS.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cover: {
-    width: COVER_SIZE,
-    height: COVER_SIZE,
     borderRadius: RADIUS.coverLarge,
   },
   coverFallback: {
-    width: COVER_SIZE,
-    height: COVER_SIZE,
     borderRadius: RADIUS.coverLarge,
     backgroundColor: COLORS.bg.highlight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   coverInitial: {
-    fontSize: COVER_SIZE * 0.35,
     fontWeight: '700',
     color: COLORS.text.tertiary,
   },
 
-  // ── Track info ──
+  // ── Desktop: linha capa | letras ──
+  desktopRow: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: SPACING.xl,
+    alignItems: 'flex-start',
+    paddingHorizontal: SPACING.screenPadding,
+    paddingVertical: SPACING.xl,
+  },
+  desktopCoverCol: {
+    alignItems: 'center',
+  },
+  desktopLyricsCol: {
+    flex: 1,
+    minWidth: 260,
+  },
+
+  // ── Info da faixa ──
   trackInfo: {
     paddingHorizontal: SPACING.screenPadding,
     paddingBottom: SPACING.xl,
@@ -587,7 +785,7 @@ const styles = StyleSheet.create({
     color: COLORS.text.secondary,
   },
 
-  // ── Controls ──
+  // ── Controles ──
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -612,7 +810,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  // ── Extra Tools ──
+  // ── Ferramentas ──
   toolsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
