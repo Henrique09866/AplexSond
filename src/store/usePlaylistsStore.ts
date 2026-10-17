@@ -1,15 +1,5 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {
-  doc,
-  setDoc,
-  getDocs,
-  collection,
-  deleteDoc,
-  query,
-  orderBy,
-} from '../services/firebase';
-import { auth, db } from '../services/firebase';
 
 export interface Playlist {
   id:        string;
@@ -36,30 +26,13 @@ interface PlaylistsState {
 
 const STORAGE_KEY = '@sondlize:playlists';
 
-const getStorageKey = () => {
-  const user = auth.currentUser;
-  return user ? `${STORAGE_KEY}:${user.uid}` : STORAGE_KEY;
-};
+const getStorageKey = () => STORAGE_KEY;
 
 const persist = async (playlists: Playlist[]) => {
   try {
     await AsyncStorage.setItem(getStorageKey(), JSON.stringify(playlists));
   } catch (e) {
     console.warn('[PlaylistsStore] persist error', e);
-  }
-};
-
-const syncToFirestore = async (playlists: Playlist[]) => {
-  const user = auth.currentUser;
-  if (!user) return;
-
-  try {
-    for (const playlist of playlists) {
-      const ref = doc(db, 'users', user.uid, 'playlists', playlist.id);
-      await setDoc(ref, playlist);
-    }
-  } catch (e) {
-    console.warn('[PlaylistsStore] firestore sync error', e);
   }
 };
 
@@ -79,7 +52,6 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
 
   hydrate: async () => {
     try {
-      const user = auth.currentUser;
       let local: Playlist[] = [];
       try {
         const raw = await AsyncStorage.getItem(getStorageKey());
@@ -88,27 +60,7 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
         local = [];
       }
 
-      if (user) {
-        const q = query(
-          collection(db, 'users', user.uid, 'playlists'),
-          orderBy('createdAt', 'asc')
-        );
-        const snapshot = await getDocs(q);
-        const playlists: Playlist[] = [];
-        snapshot.forEach((doc) => {
-          playlists.push(doc.data() as Playlist);
-        });
-
-        if (playlists.length === 0 && local.length > 0) {
-          set({ playlists: local, hydrated: true });
-          return;
-        }
-
-        set({ playlists, hydrated: true });
-        await persist(playlists);
-      } else {
-        set({ playlists: local, hydrated: true });
-      }
+      set({ playlists: local, hydrated: true });
     } catch {
       try {
         const raw = await AsyncStorage.getItem(getStorageKey());
@@ -136,7 +88,6 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     const next = [playlist, ...get().playlists];
     set({ playlists: next });
     persist(next);
-    syncToFirestore(next);
     return playlist;
   },
 
@@ -148,19 +99,12 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     );
     set({ playlists: next });
     persist(next);
-    syncToFirestore(next);
   },
 
   deletePlaylist: (id) => {
     const next = get().playlists.filter((p) => p.id !== id);
     set({ playlists: next });
     persist(next);
-
-    const user = auth.currentUser;
-    if (user) {
-      const ref = doc(db, 'users', user.uid, 'playlists', id);
-      deleteDoc(ref).catch((e) => console.warn('[PlaylistsStore] delete error', e));
-    }
   },
 
   addTrackToPlaylist: (playlistId, trackId) => {
@@ -175,7 +119,6 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     });
     set({ playlists: next });
     persist(next);
-    syncToFirestore(next);
   },
 
   removeTrackFromPlaylist: (playlistId, trackId) => {
@@ -186,7 +129,6 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     );
     set({ playlists: next });
     persist(next);
-    syncToFirestore(next);
   },
 
   removeTrackFromAllPlaylists: (trackId) => {
@@ -200,7 +142,6 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     });
     set({ playlists: next });
     persist(next);
-    syncToFirestore(next);
   },
 
   reorderTracks: (playlistId, from, to) => {
@@ -211,7 +152,6 @@ export const usePlaylistsStore = create<PlaylistsState>((set, get) => ({
     );
     set({ playlists: next });
     persist(next);
-    syncToFirestore(next);
   },
 
   isTrackInPlaylist: (playlistId, trackId) => {

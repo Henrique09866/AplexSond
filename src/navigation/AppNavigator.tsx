@@ -1,6 +1,7 @@
 import React, { useRef, useCallback, useEffect } from 'react';
 import {
   View,
+  Text,
   TouchableOpacity,
   Animated,
   StyleSheet,
@@ -377,7 +378,6 @@ const MainTabs: React.FC = () => {
 
   const tabNavigator = (
     <Tab.Navigator
-      tabBarPosition={isDesktop ? 'left' : 'bottom'}
       tabBar={
         isDesktop
           ? (props) => <DesktopSidebar {...props} />

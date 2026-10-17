@@ -2,14 +2,12 @@ import { create } from 'zustand';
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TrackPlayer, { Event, PlaybackState } from '@rntp/player';
-import { doc, getDoc, setDoc } from '../services/firebase';
 import {
   setupTrackPlayer,
   toMediaItem,
   toNativeRepeatMode,
 } from '../core/trackPlayerServices';
 import { Track } from '../core/entities';
-import { auth, db } from '../services/firebase';
 
 export type RepeatMode = 'off' | 'all' | 'one';
 
@@ -70,7 +68,6 @@ const MAX_TICK_DELTA = 120; // segundos por tick (evita contagens absurdas)
 const DEFAULT_EQ_BANDS = [0, 0, 0, 0, 0];
 let lastPlaybackTick = Date.now();
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
-let remotePersistTimer: ReturnType<typeof setTimeout> | null = null;
 
 type PlayerPrefs = {
   listenedSeconds?: number;
@@ -79,18 +76,8 @@ type PlayerPrefs = {
   eqBands?: number[];
 };
 
-const getScopedStorageKey = (key: string, userId = auth.currentUser?.uid) =>
-  `${key}:${userId ?? 'anonymous'}`;
-
-const getPlayerSettingsRef = (userId = auth.currentUser?.uid) => {
-  return userId ? doc(db, 'users', userId, 'settings', 'player') : null;
-};
-
-const persistPlayerPrefsLocal = async (prefs: PlayerPrefs, userId?: string) => {
-  await AsyncStorage.setItem(
-    getScopedStorageKey(PLAYER_PREFS_KEY, userId),
-    JSON.stringify(prefs),
-  );
+const persistPlayerPrefsLocal = async (prefs: PlayerPrefs) => {
+  await AsyncStorage.setItem(PLAYER_PREFS_KEY, JSON.stringify(prefs));
 };
 
 export const usePlayerStore = create<PlayerState>((set, get) => {
@@ -385,9 +372,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     },
 
     loadListenedSeconds: async () => {
-      const userId = auth.currentUser?.uid;
       try {
-        const raw = await AsyncStorage.getItem(getScopedStorageKey(LISTENED_KEY, userId));
+        const raw = await AsyncStorage.getItem(LISTENED_KEY);
         const value = raw ? Number(raw) : 0;
         set({ listenedSeconds: Number.isFinite(value) ? value : 0 });
       } catch {
@@ -397,10 +383,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
 
     resetListenedSeconds: async () => {
       set({ listenedSeconds: 0 });
-      await AsyncStorage.setItem(
-        getScopedStorageKey(LISTENED_KEY),
-        '0',
-      );
+      await AsyncStorage.setItem(LISTENED_KEY, '0');
       await get().syncPreferences();
     },
 
@@ -419,12 +402,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     },
 
     loadPreferences: async () => {
-      const userId = auth.currentUser?.uid;
-      const prefsKey = getScopedStorageKey(PLAYER_PREFS_KEY, userId);
-      const listenedKey = getScopedStorageKey(LISTENED_KEY, userId);
-
-      // Nunca reutiliza em memória as preferências da conta anterior enquanto
-      // as preferências desta conta ainda estão sendo carregadas.
+      // Redefine para padrões antes de ler o cache local.
       set({
         listenedSeconds: 0,
         shuffleEnabled: false,
@@ -434,19 +412,15 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
 
       let localPrefs: PlayerPrefs = {};
       try {
-        const rawPrefs = await AsyncStorage.getItem(prefsKey);
+        const rawPrefs = await AsyncStorage.getItem(PLAYER_PREFS_KEY);
         localPrefs = rawPrefs ? JSON.parse(rawPrefs) : {};
       } catch {
         localPrefs = {};
       }
 
       try {
-        const rawListened = await AsyncStorage.getItem(listenedKey);
+        const rawListened = await AsyncStorage.getItem(LISTENED_KEY);
         const listenedSeconds = rawListened ? Number(rawListened) : localPrefs.listenedSeconds ?? 0;
-
-        // Evita que uma leitura iniciada para a conta anterior sobrescreva a
-        // memória depois de uma troca de sessão.
-        if (auth.currentUser?.uid !== userId) return;
 
         set({
           listenedSeconds: Number.isFinite(listenedSeconds) ? listenedSeconds : 0,
@@ -459,37 +433,9 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       } catch {
         set({ listenedSeconds: 0 });
       }
-
-      // A conta pode ter mudado enquanto o cache era lido.
-      if (auth.currentUser?.uid !== userId) return;
-
-      const settingsRef = getPlayerSettingsRef(userId);
-      if (!settingsRef) return;
-
-      try {
-        const snapshot = await getDoc(settingsRef);
-        if (auth.currentUser?.uid !== userId) return;
-        if (!snapshot.exists()) return;
-
-        const remote = snapshot.data() as PlayerPrefs;
-        set({
-          listenedSeconds: Number.isFinite(remote.listenedSeconds)
-            ? remote.listenedSeconds ?? get().listenedSeconds
-            : get().listenedSeconds,
-          shuffleEnabled: remote.shuffleEnabled ?? get().shuffleEnabled,
-          eqPreset: remote.eqPreset ?? get().eqPreset,
-          eqBands: Array.isArray(remote.eqBands) && remote.eqBands.length === 5
-            ? remote.eqBands
-            : get().eqBands,
-        });
-        await get().syncPreferences();
-      } catch (e) {
-        console.warn('[usePlayerStore] Falha ao carregar preferências:', e);
-      }
     },
 
     syncPreferences: async () => {
-      const userId = auth.currentUser?.uid;
       const { listenedSeconds, shuffleEnabled, eqPreset, eqBands } = get();
       const prefs: PlayerPrefs = {
         listenedSeconds,
@@ -498,23 +444,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
         eqBands,
       };
 
-      await persistPlayerPrefsLocal(prefs, userId).catch(() => {});
-      await AsyncStorage.setItem(
-        getScopedStorageKey(LISTENED_KEY, userId),
-        String(listenedSeconds),
-      ).catch(() => {});
-
-      if (remotePersistTimer) clearTimeout(remotePersistTimer);
-      remotePersistTimer = setTimeout(() => {
-        // Não deixa uma gravação agendada pela conta anterior atingir a conta
-        // que acabou de entrar.
-        if (auth.currentUser?.uid !== userId) return;
-        const settingsRef = getPlayerSettingsRef(userId);
-        if (!settingsRef) return;
-        setDoc(settingsRef, { ...prefs, updatedAt: Date.now() }, { merge: true }).catch((e) =>
-          console.warn('[usePlayerStore] Falha ao salvar preferências:', e),
-        );
-      }, 600);
+      await persistPlayerPrefsLocal(prefs).catch(() => {});
+      await AsyncStorage.setItem(LISTENED_KEY, String(listenedSeconds)).catch(() => {});
     },
   };
 });
