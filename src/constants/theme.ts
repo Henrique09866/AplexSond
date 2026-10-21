@@ -7,42 +7,42 @@
 import { Platform, TextStyle, ViewStyle } from 'react-native';
  
 // ─── Color Palette ───────────────────────────────────────────
- 
+  
 export const COLORS = {
   // Backgrounds — layered dark surfaces (OLED-safe)
   bg: {
-    base:       '#0A0A0A', // true black — main background
-    elevated:   '#111111', // slightly lifted surface
-    surface:    '#181818', // cards, sheets
-    overlay:    '#1F1F1F', // modals, bottom sheets
-    highlight:  '#282828', // hover states, selected rows
-    input:      '#2A2A2A', // text inputs, search bars
+    base:       '#0B0B0C', // fundo principal — preto quase total
+    elevated:   '#111113', // sidebar — levemente acima do base
+    surface:    '#18181B', // cards e superfícies padrão
+    overlay:    '#202024', // superfícies elevadas / modais
+    highlight:  '#29292F', // estados de hover, linhas selecionadas
+    input:      '#2A2A2E', // inputs de texto, campos de busca
   },
  
-  // Accent — SondLize red with tonal variants
+  // Accent — Vermelho consistente com variantes tonais
   accent: {
-    primary:    '#FF1200', // main CTA, active states, progress
-    bright:     '#FF3B30', // hover / pressed variant
-    dim:        '#A80F08', // subtle tint on dark bg
-    muted:      '#FF120033', // 20% opacity fill (chips, tags)
-    glow:       '#FF120020', // 12% — very subtle backgrounds
+    primary:    '#FF1E1E', // vermelho principal — botões, ativos, ícones
+    bright:     '#FF4D4D', // hover / pressionado
+    dim:        '#991B1B', // vermelho escuro — fundo do item selecionado
+    muted:      '#FF1E1E33', // 20% opacidade — chips, tags, indicações
+    glow:       '#FF1E1E20', // 12% — backgrounds sutis
   },
  
   // Text hierarchy
   text: {
-    primary:    '#FFFFFF',
-    secondary:  '#B3B3B3',
-    tertiary:   '#727272',
-    disabled:   '#404040',
-    inverse:    '#FFFFFF',
-    onAccent:   '#FFFFFF',
+    primary:    '#F5F5F5', // texto principal
+    secondary:  '#A1A1AA', // texto secundário
+    tertiary:   '#71717A', // texto terciário (muted)
+    disabled:   '#52525B', // estados desabilitados
+    inverse:    '#F5F5F5', // texto sobre fundo escuro/vermelho
+    onAccent:   '#F5F5F5', // texto sobre botão vermelho
   },
  
   // Borders & dividers
   border: {
-    subtle:     '#FFFFFF0D', // 5% — barely visible separator
-    default:    '#FFFFFF1A', // 10% — standard border
-    strong:     '#FFFFFF33', // 20% — focused / emphasized
+    subtle:     '#29292F', // separador quase invisível
+    default:    '#3A3A3F', // borda padrão
+    strong:     '#52525B', // foco / enfatizado
   },
  
   // Semantic colors
@@ -50,16 +50,16 @@ export const COLORS = {
     error:      '#F15E6C',
     errorMuted: '#F15E6C22',
     warning:    '#F59E0B',
-    success:    '#FF1200',
+    success:    '#FF1E1E',
     info:       '#3B82F6',
   },
  
-  // Folder palette — 12 vibrant but dark-friendly hues
+  // Folder palette — 12 cores vibrantes (ajustadas para o tema escuro)
   folders: [
+    '#FF1E1E', // vermelho (accent)
     '#E1306C', // hot pink
     '#F77737', // orange
     '#FCAF45', // amber
-    '#FF1200', // red (accent)
     '#00B4D8', // cyan
     '#4361EE', // indigo
     '#7B2FBE', // purple

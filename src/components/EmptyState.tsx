@@ -1,7 +1,7 @@
 import React from 'react';
 import { Animated, View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS, TYPOGRAPHY, SPACING } from '../constants/theme';
+import { COLORS, TYPOGRAPHY, SPACING, SHADOWS } from '../constants/theme';
 
 interface EmptyStateProps {
   icon?: keyof typeof Ionicons.glyphMap;
@@ -58,27 +58,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING['3xl'],
+    gap: SPACING.md,
   },
   iconWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: COLORS.accent.muted,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: SPACING.md,
+    ...SHADOWS.accentGlow,
   },
   title: {
-    ...TYPOGRAPHY.h3,
+    ...TYPOGRAPHY.h2,
     textAlign: 'center',
     marginBottom: SPACING.sm,
   },
   subtitle: {
     ...TYPOGRAPHY.body,
     textAlign: 'center',
+    color: COLORS.text.secondary,
   },
   actionWrapper: {
     marginTop: SPACING.xl,
     width: '100%',
+    alignItems: 'center',
   },
 });

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import {
@@ -24,6 +25,7 @@ import {
 } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useWindowDimensions } from 'react-native';
+import Constants from 'expo-constants';
 import { navigationRef } from './navigationRef';
 import { useNavigation } from '@react-navigation/native';
 
@@ -47,6 +49,21 @@ import {
   RADIUS,
   SIZES,
 } from '../constants/theme';
+
+// ─── Desktop constants ────────────────────────────────────────
+// A partir dessa largura (e na web/Electron) o app usa o layout
+// de desktop: sidebar à esquerda + barra de player em baixo.
+
+export const DESKTOP_MIN_WIDTH = 900;
+export const DESKTOP_SIDEBAR_WIDTH = 240;
+
+export const APP_VERSION =
+  Constants.expoConfig?.version ?? '1.0.4';
+
+export const useIsDesktop = (): boolean => {
+  const { width } = useWindowDimensions();
+  return Platform.OS === 'web' && width >= DESKTOP_MIN_WIDTH;
+};
 
 // ─── Navigation theme ─────────────────────────────────────────
 
@@ -294,8 +311,8 @@ const CustomTabBar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
 const Tab   = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-const DesktopSidebar: React.FC<any> = (props) => {
-  const { state, navigation } = props;
+const DesktopSidebar: React.FC<BottomTabBarProps> = ({ state, navigation }) => {
+  const insets     = useSafeAreaInsets();
   const activeIndex = state.index;
 
   const handlePress = (index: number) => {
@@ -310,12 +327,25 @@ const DesktopSidebar: React.FC<any> = (props) => {
     }
   };
 
+  const handleOpen = (screen: string) => {
+    navigation.navigate(screen as never);
+  };
+
   return (
-    <View style={dStyles.sidebar}>
+    <View style={[dStyles.sidebar, { paddingTop: insets.top + SPACING.lg }]}>
+      {/* ── Marca ── */}
       <View style={dStyles.logoBlock}>
+        <View style={dStyles.logoContainer}>
+          <Image
+            source={require('../../assets/images/logoaplexsond.png')}
+            style={dStyles.logoImage}
+            resizeMode="contain"
+          />
+        </View>
         <Text style={dStyles.logoText}>AplexSond</Text>
       </View>
 
+      {/* ── Navegação principal ── */}
       <View style={dStyles.nav}>
         {TABS.map((tab, index) => {
           const focused = activeIndex === index;
@@ -323,11 +353,18 @@ const DesktopSidebar: React.FC<any> = (props) => {
             <TouchableOpacity
               key={tab.key}
               onPress={() => handlePress(index)}
+              activeOpacity={0.85}
               style={[dStyles.navItem, focused && dStyles.navItemActive]}
+              accessibilityRole="button"
+              accessibilityState={{ selected: focused }}
+              accessibilityLabel={tab.label}
             >
+              <View
+                style={[dStyles.navIndicator, focused && dStyles.navIndicatorActive]}
+              />
               <Ionicons
                 name={focused ? tab.iconActive : tab.icon}
-                size={22}
+                size={SIZES.icon.md}
                 color={focused ? COLORS.accent.primary : COLORS.text.secondary}
               />
               <Text
@@ -341,29 +378,47 @@ const DesktopSidebar: React.FC<any> = (props) => {
         })}
       </View>
 
+      {/* ── Rodapé da sidebar ── */}
       <View style={dStyles.bottomNav}>
         <TouchableOpacity
           style={dStyles.bottomNavItem}
-          onPress={() => navigation.navigate('Profile' as never)}
+          activeOpacity={0.85}
+          onPress={() => handleOpen('Profile')}
+          accessibilityRole="button"
+          accessibilityLabel="Perfil"
         >
-          <Ionicons name="person-circle-outline" size={20} color={COLORS.text.secondary} />
+          <Ionicons
+            name="person-circle-outline"
+            size={SIZES.icon.lg}
+            color={COLORS.text.secondary}
+          />
           <Text style={dStyles.bottomNavLabel}>Perfil</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={dStyles.bottomNavItem}
-          onPress={() => navigation.navigate('Settings' as never)}
+          activeOpacity={0.85}
+          onPress={() => handleOpen('Settings')}
+          accessibilityRole="button"
+          accessibilityLabel="Configurações"
         >
-          <Ionicons name="settings-outline" size={20} color={COLORS.text.secondary} />
+          <Ionicons
+            name="settings-outline"
+            size={SIZES.icon.lg}
+            color={COLORS.text.secondary}
+          />
           <Text style={dStyles.bottomNavLabel}>Configurações</Text>
         </TouchableOpacity>
+
+        <View style={dStyles.divider} />
+        <Text style={dStyles.version}>v{APP_VERSION}</Text>
+        <Text style={dStyles.status}>● Offline</Text>
       </View>
     </View>
   );
 };
 
 const MainTabs: React.FC = () => {
-  const { width } = useWindowDimensions();
-  const isDesktop = Platform.OS === 'web' && width >= 900;
+  const isDesktop = useIsDesktop();
 
   const currentTrack = usePlayerStore((s) => s.currentTrack);
   const isPlaying = usePlayerStore((s) => s.isPlaying);
@@ -385,7 +440,11 @@ const MainTabs: React.FC = () => {
       }
       screenOptions={{
         headerShown: false,
-        tabBarStyle: isDesktop ? { width: 240, borderRightWidth: StyleSheet.hairlineWidth, borderRightColor: COLORS.border.subtle } : undefined,
+        // No desktop a "tab bar" vira a sidebar à esquerda.
+        // O BottomTabView usa `flexDirection: row` quando a
+        // posição é left/right, então a sidebar ocupa a lateral
+        // e as telas ficam ao lado — em vez de ficarem embaixo.
+        tabBarPosition: isDesktop ? 'left' : 'bottom',
       }}
     >
       <Tab.Screen name="Library" component={LibraryScreen} />
@@ -414,6 +473,7 @@ const MainTabs: React.FC = () => {
             onPrev={skipPrev}
             onNext={skipNext}
             onPress={() => navigation.navigate('PlayerScene' as never)}
+            inline
           />
         </View>
       )}
@@ -505,46 +565,79 @@ const AppStack: React.FC = () => (
 
 const dStyles = StyleSheet.create({
   sidebar: {
-    width: 240,
+    width: DESKTOP_SIDEBAR_WIDTH,
     height: '100%',
-    backgroundColor: COLORS.bg.surface,
+    backgroundColor: COLORS.bg.elevated,
     borderRightWidth: StyleSheet.hairlineWidth,
     borderRightColor: COLORS.border.subtle,
-    paddingTop: SPACING.lg,
     paddingBottom: SPACING.md,
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: 0,
     flexDirection: 'column',
   },
   logoBlock: {
-    marginBottom: SPACING.xl,
-    paddingHorizontal: SPACING.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.xl,
+  },
+  logoContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.accent.muted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  logoImage: {
+    width: 24,
+    height: 24,
+    tintColor: COLORS.accent.primary,
   },
   logoText: {
     ...TYPOGRAPHY.h3,
-    color: COLORS.accent.primary,
+    color: COLORS.text.primary,
     fontWeight: '700',
+    letterSpacing: -0.3,
   },
   nav: {
     flex: 1,
     gap: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
   },
   navItem: {
+    position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
     borderRadius: RADIUS.md,
+    overflow: 'hidden',
   },
   navItemActive: {
-    backgroundColor: COLORS.accent.muted,
+    backgroundColor: COLORS.accent.dim,
+  },
+  navIndicator: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    borderRadius: 2,
+    backgroundColor: 'transparent',
+  },
+  navIndicatorActive: {
+    backgroundColor: COLORS.accent.primary,
   },
   navLabel: {
     ...TYPOGRAPHY.title,
     color: COLORS.text.secondary,
   },
   navLabelActive: {
-    color: COLORS.accent.primary,
+    color: COLORS.text.primary,
     fontWeight: '600',
   },
   bottomNav: {
@@ -552,17 +645,37 @@ const dStyles = StyleSheet.create({
     borderTopColor: COLORS.border.subtle,
     paddingTop: SPACING.md,
     gap: SPACING.xs,
+    paddingHorizontal: SPACING.md,
   },
   bottomNavItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
+    gap: SPACING.md,
     paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md,
   },
   bottomNavLabel: {
     ...TYPOGRAPHY.label,
     color: COLORS.text.secondary,
+  },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: COLORS.border.subtle,
+    marginVertical: SPACING.sm,
+    marginHorizontal: SPACING.md,
+  },
+  version: {
+    ...TYPOGRAPHY.label,
+    color: COLORS.text.tertiary,
+    paddingHorizontal: SPACING.md,
+    marginTop: SPACING.sm,
+  },
+  status: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.text.tertiary,
+    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.md,
   },
 });
 
@@ -577,12 +690,11 @@ const mStyles = StyleSheet.create({
     flexDirection: 'row',
   },
   desktopPlayerBar: {
-    height: 88,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: COLORS.border.subtle,
-    backgroundColor: COLORS.bg.base,
-    justifyContent: 'center',
+    backgroundColor: COLORS.bg.elevated,
     paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
 });
 

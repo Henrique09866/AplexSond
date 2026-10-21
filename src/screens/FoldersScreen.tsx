@@ -23,6 +23,7 @@ import {
   SPACING,
   RADIUS,
   SIZES,
+  SHADOWS,
 } from '../constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -116,12 +117,13 @@ export const FoldersScreen: React.FC = () => {
           setShowCreate(true);
         }}
         style={[styles.createButton, isReordering && styles.doneButton]}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
         <View style={styles.buttonContent}>
           <Ionicons
             name={isReordering ? 'checkmark' : 'add'}
             size={18}
-            color={isReordering ? COLORS.text.inverse : COLORS.accent.primary}
+            color={isReordering ? COLORS.text.inverse : COLORS.text.onAccent}
           />
           <Text style={[styles.createButtonText, isReordering && styles.doneButtonText]}>
             {isReordering ? 'Concluir' : 'Nova pasta'}
@@ -186,23 +188,24 @@ const styles = StyleSheet.create({
   // ── Header ──
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: SPACING.lg,
+    paddingBottom: SPACING.xl,
   },
   pageTitle: {
     ...TYPOGRAPHY.h1,
   },
   createButton: {
-    backgroundColor: COLORS.accent.muted,
+    backgroundColor: COLORS.accent.primary,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.chip,
+    ...SHADOWS.accentGlow,
   },
   createButtonText: {
     ...TYPOGRAPHY.label,
-    color: COLORS.accent.primary,
-    fontWeight: '600',
+    color: COLORS.text.onAccent,
+    fontWeight: '700',
   },
   buttonContent: {
     flexDirection: 'row',
@@ -210,10 +213,10 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   doneButton: {
-    backgroundColor: COLORS.accent.primary,
+    backgroundColor: COLORS.accent.bright,
   },
   doneButtonText: {
-    color: COLORS.text.inverse,
+    color: COLORS.text.onAccent,
   },
 
   // ── Grid ──

@@ -85,7 +85,12 @@ export const RecentsScreen: React.FC = () => {
         )}
         ListHeaderComponent={
           <View style={[styles.header, { paddingTop: insets.top + SPACING.md }]}>
-            <Text style={styles.pageTitle}>Recentes</Text>
+            <View style={styles.headerContent}>
+              <Text style={styles.pageTitle}>Recentes</Text>
+              <Text style={styles.pageSubtitle}>
+                Suas músicas tocadas e adicionadas mais recentemente
+              </Text>
+            </View>
           </View>
         }
         ListEmptyComponent={
@@ -122,10 +127,18 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: SPACING.screenPadding,
-    paddingBottom: SPACING.lg,
+    paddingBottom: SPACING.xl,
+  },
+  headerContent: {
+    flex: 1,
   },
   pageTitle: {
     ...TYPOGRAPHY.h1,
+  },
+  pageSubtitle: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.text.secondary,
+    marginTop: 2,
   },
   sectionLabel: {
     ...TYPOGRAPHY.overline,

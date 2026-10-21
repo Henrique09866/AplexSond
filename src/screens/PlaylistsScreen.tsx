@@ -231,10 +231,11 @@ export const PlaylistsScreen: React.FC = () => {
       <TouchableOpacity
         onPress={() => setShowCreate(true)}
         style={styles.createButton}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
         <View style={styles.buttonContent}>
-          <Ionicons name="add" size={18} color={COLORS.accent.primary} />
-          <Text style={styles.createButtonText}>Nova</Text>
+          <Ionicons name="add" size={18} color={COLORS.text.onAccent} />
+          <Text style={styles.createButtonText}>Nova playlist</Text>
         </View>
       </TouchableOpacity>
     </View>
@@ -284,13 +285,13 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: COLORS.bg.base },
   list:   { flexGrow: 1 },
   header: {
-    flexDirection: 'row', alignItems: 'flex-end',
+    flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.screenPadding,
-    paddingBottom: SPACING.lg,
+    paddingBottom: SPACING.xl,
   },
   pageTitle:         { ...TYPOGRAPHY.h1 },
-  createButton:      { backgroundColor: COLORS.accent.muted, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.chip },
-  createButtonText:  { ...TYPOGRAPHY.label, color: COLORS.accent.primary, fontWeight: '600' },
+  createButton:      { backgroundColor: COLORS.accent.primary, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.chip, ...SHADOWS.accentGlow },
+  createButtonText:  { ...TYPOGRAPHY.label, color: COLORS.text.onAccent, fontWeight: '700' },
   buttonContent:     { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
 });

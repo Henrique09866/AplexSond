@@ -33,6 +33,7 @@ import {
   SPACING,
   RADIUS,
   SIZES,
+  SHADOWS,
 } from '../constants/theme';
 
 // ─── Screen ───────────────────────────────────────────────────
@@ -267,38 +268,46 @@ export const LibraryScreen: React.FC = () => {
     <View>
       {/* ── Page title ── */}
       <View style={[styles.header, { paddingTop: insets.top + SPACING.md }]}>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Profile')}
-          style={styles.profileButton}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityRole="button"
-          accessibilityLabel="Perfil"
-        >
-          <UserAvatar
-            photoURL={profile?.photoURL}
-            initial={(profile?.displayName || 'AplexSond')
-              .trim()
-              .charAt(0)
-              .toUpperCase()}
-            size={SIZES.avatar.md}
-            crop={profile?.crop}
-          />
-        </TouchableOpacity>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Profile')}
+            style={styles.profileButton}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel="Perfil"
+          >
+            <UserAvatar
+              photoURL={profile?.photoURL}
+              initial={(profile?.displayName || 'AplexSond')
+                .trim()
+                .charAt(0)
+                .toUpperCase()}
+              size={SIZES.avatar.md}
+              crop={profile?.crop}
+            />
+          </TouchableOpacity>
 
-        <Text style={styles.pageTitle}>Sua Biblioteca</Text>
+          <View style={styles.titleWrapper}>
+            <Text style={styles.pageTitle}>Sua Biblioteca</Text>
+            <Text style={styles.pageSubtitle}>
+              Aqui ficam todas as suas músicas, organizadas do seu jeito.
+            </Text>
+          </View>
+        </View>
 
         <TouchableOpacity
           onPress={handleImport}
           disabled={loading}
-          style={styles.importButton}
+          style={[styles.importButton, loading && styles.importButtonLoading]}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel="Adicionar músicas"
         >
           {loading ? (
-            <ActivityIndicator size="small" color={COLORS.accent.primary} />
+            <ActivityIndicator size="small" color={COLORS.text.onAccent} />
           ) : (
             <View style={styles.buttonContent}>
-              <Ionicons name="add" size={18} color={COLORS.accent.primary} />
-              <Text style={styles.importButtonText}>Adicionar</Text>
+              <Ionicons name="add" size={18} color={COLORS.text.onAccent} />
+              <Text style={styles.importButtonText}>Adicionar músicas</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -310,7 +319,7 @@ export const LibraryScreen: React.FC = () => {
           <Ionicons name="search" size={18} color={COLORS.text.tertiary} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar músicas ou artistas"
+            placeholder="Buscar músicas, artistas, álbuns ou pastas…"
             placeholderTextColor={COLORS.text.tertiary}
             value={query}
             onChangeText={setQuery}
@@ -320,6 +329,7 @@ export const LibraryScreen: React.FC = () => {
         </View>
       </View>
 
+      {/* ── Filter chips ── */}
       <FlatList
         data={FILTERS}
         keyExtractor={(item) => item.key}
@@ -678,35 +688,53 @@ const styles = StyleSheet.create({
   // ── Header ──
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.screenPadding,
-    paddingBottom: SPACING.lg,
+    paddingBottom: SPACING.xl,
     gap: SPACING.md,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  titleWrapper: {
+    flex: 1,
   },
   pageTitle: {
     ...TYPOGRAPHY.h1,
-    flex: 1,
+  },
+  pageSubtitle: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.text.secondary,
+    marginTop: 2,
   },
   profileButton: {
     width: SIZES.avatar.md,
     height: SIZES.avatar.md,
-    marginBottom: SPACING.xs,
+    borderRadius: RADIUS.avatar,
+    overflow: 'hidden',
+    backgroundColor: COLORS.bg.highlight,
   },
   importButton: {
-    backgroundColor: COLORS.accent.muted,
-    minWidth: 104,
-    minHeight: 38,
+    backgroundColor: COLORS.accent.primary,
+    minWidth: 150,
+    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.chip,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.button,
+    ...SHADOWS.accentGlow,
+  },
+  importButtonLoading: {
+    opacity: 0.7,
   },
   importButtonText: {
     ...TYPOGRAPHY.label,
-    color: COLORS.accent.primary,
-    fontWeight: '600',
+    color: COLORS.text.onAccent,
+    fontWeight: '700',
   },
   buttonContent: {
     flexDirection: 'row',
@@ -717,7 +745,7 @@ const styles = StyleSheet.create({
   // ── Search ──
   searchRow: {
     paddingHorizontal: SPACING.screenPadding,
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
   },
   searchContainer: {
     flexDirection: 'row',
@@ -725,8 +753,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bg.input,
     borderRadius: RADIUS.input,
     paddingHorizontal: SPACING.md,
-    height: 44,
+    height: 48,
     gap: SPACING.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: COLORS.border.default,
   },
   searchInput: {
     flex: 1,

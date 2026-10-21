@@ -29,6 +29,7 @@ import {
   SPACING,
   RADIUS,
   SIZES,
+  SHADOWS,
 } from '../constants/theme';
 
 const AVATAR_SIZE = 96;
@@ -345,6 +346,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderWidth: 3,
     borderColor: COLORS.bg.base,
+    ...SHADOWS.accentGlow,
   },
 
   // ── Info ──
@@ -367,7 +369,7 @@ const styles = StyleSheet.create({
   editNameText: {
     ...TYPOGRAPHY.label,
     color: COLORS.accent.primary,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   ghostButton: {
     alignSelf: 'center',
@@ -380,7 +382,7 @@ const styles = StyleSheet.create({
   ghostButtonText: {
     ...TYPOGRAPHY.label,
     color: COLORS.accent.primary,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   ghostButtonSecondary: {
     alignSelf: 'center',
@@ -413,13 +415,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  settingsInfo: {
-    flex: 1,
-    gap: 2,
-  },
   settingsLabel: {
     ...TYPOGRAPHY.title,
     color: COLORS.text.primary,
+    fontWeight: '600',
+  },
+  settingsInfo: {
+    flex: 1,
+    gap: 2,
   },
   settingsSub: {
     ...TYPOGRAPHY.caption,

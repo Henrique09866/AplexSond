@@ -222,7 +222,7 @@ export const SongListItem: React.FC<SongListItemProps> = ({
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               style={styles.deleteButton}
             >
-              <Ionicons name="trash-outline" size={18} color="#FF4444" />
+              <Ionicons name="trash-outline" size={18} color={COLORS.semantic.error} />
             </TouchableOpacity>
           )}
           {rightAction ?? null}

@@ -1,6 +1,6 @@
 {
   "name": "aplexsond-desktop",
-  "version": "1.0.4",
+  "version": "1.23",
   "description": "SondLize para Windows (desktop)",
   "main": "main.js",
   "scripts": {
@@ -20,7 +20,7 @@
     "files": [
       "main.js",
       "preload.js",
-      "../dist/**/*"
+      "dist/**/*"
     ],
     "win": {
       "target": "nsis",

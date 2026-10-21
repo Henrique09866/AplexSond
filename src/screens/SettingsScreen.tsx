@@ -206,8 +206,9 @@ export const SettingsScreen: React.FC = () => {
               <Switch
                 value={shuffleEnabled}
                 onValueChange={toggleShuffle}
-                trackColor={{ true: COLORS.accent.dim, false: COLORS.border.strong }}
+                trackColor={{ true: COLORS.accent.muted, false: COLORS.border.strong }}
                 thumbColor={shuffleEnabled ? COLORS.accent.primary : COLORS.text.disabled}
+                ios_backgroundColor={COLORS.border.strong}
               />
             }
           />
@@ -233,8 +234,9 @@ export const SettingsScreen: React.FC = () => {
               <Switch
                 value={notificationsOn}
                 onValueChange={handleToggleNotifications}
-                trackColor={{ true: COLORS.accent.dim, false: COLORS.border.strong }}
+                trackColor={{ true: COLORS.accent.muted, false: COLORS.border.strong }}
                 thumbColor={notificationsOn ? COLORS.accent.primary : COLORS.text.disabled}
+                ios_backgroundColor={COLORS.border.strong}
               />
             }
           />
@@ -311,7 +313,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.bg.highlight,
+    backgroundColor: COLORS.accent.muted,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: SPACING.sm,
