@@ -12,7 +12,6 @@ import {
   Modal,
   TextInput,
   Platform,
-  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -38,13 +37,6 @@ import {
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const COVER_SIZE = SCREEN_WIDTH - SPACING.screenPadding * 2;
-const DESKTOP_COVER_SIZE = 360;
-
-// ─── Detecta desktop (Electron/web) ────────────────────────────
-const useIsDesktop = (): boolean => {
-  const { width } = useWindowDimensions();
-  return Platform.OS === 'web' && width >= 900;
-};
 
 // ─── Icon helpers (sem dep externa) ────────────────────────────
 
@@ -147,7 +139,6 @@ const sliderStyles = StyleSheet.create({
 
 export const PlayerScreen: React.FC = () => {
   const insets     = useSafeAreaInsets();
-  const isDesktop  = useIsDesktop();
   const navigation = useNavigation<any>();
 
   const currentTrack = usePlayerStore((s) => s.currentTrack);
@@ -171,7 +162,7 @@ export const PlayerScreen: React.FC = () => {
   const toggleShuffle = usePlayerStore((s) => s.toggleShuffle);
   const cycleRepeat   = usePlayerStore((s) => s.cycleRepeat);
 
-  const [showLyrics, setShowLyrics] = useState(() => isDesktop && !!currentTrack?.lyrics);
+  const [showLyrics, setShowLyrics] = useState(false);
   const [showEq, setShowEq] = useState(false);
   const [showSleepTimer, setShowSleepTimer] = useState(false);
   const [showMoveFolder, setShowMoveFolder] = useState(false);
@@ -262,7 +253,7 @@ export const PlayerScreen: React.FC = () => {
   }
 
   // ── Tamanho da capa (maior e fixo no PC, preenche a tela no celular) ──
-  const coverSize = isDesktop ? DESKTOP_COVER_SIZE : COVER_SIZE;
+  const coverSize = COVER_SIZE;
 
   // ── Conteúdo da capa ──
   const coverContent = (
@@ -295,197 +286,6 @@ export const PlayerScreen: React.FC = () => {
       onEdit={openLyricsEditor}
     />
   );
-
-  // ═══════════════════════════════════════════════════════════════
-  // LAYOUT PARA PC (capa + letras lado a lado)
-  // ═══════════════════════════════════════════════════════════════
-  if (isDesktop) {
-    return (
-      <Animated.View
-        style={[styles.screen, { transform: [{ translateY }] }]}
-        {...pan.panHandlers}
-      >
-        <StatusBar barStyle="light-content" backgroundColor={COLORS.bg.base} />
-
-        {/* Fundo levemente tintado com a cor da capa */ }
-        <View style={styles.bgTint} />
-
-        {/* Top bar */}
-        <View style={[styles.topBar, { paddingTop: insets.top + SPACING.sm }]}>
-          <View style={styles.handle} />
-
-          <View style={styles.topBarRow}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.topBarButton}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            >
-              <Ionicons name="chevron-down" size={28} color={COLORS.text.primary} />
-            </TouchableOpacity>
-
-            <View style={styles.topBarCenter}>
-              <Text style={styles.topBarLabel}>TOCANDO AGORA</Text>
-            </View>
-
-            <TouchableOpacity
-              onPress={handleOpenMoveFolder}
-              style={styles.topBarButton}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            >
-              <Ionicons
-                name={currentFolderId ? 'folder' : 'folder-outline'}
-                size={22}
-                color={currentFolderId ? COLORS.accent.primary : COLORS.text.primary}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Linha: capa à esquerda | letras à direita */}
-        <View style={styles.desktopRow}>
-          <View style={styles.desktopCoverCol}>{coverContent}</View>
-
-          {showLyrics && currentTrack.lyrics ? (
-            <View style={styles.desktopLyricsCol}>{renderLyricsPanel()}</View>
-          ) : null}
-        </View>
-
-        {/* Info da faixa */}
-        <View style={styles.trackInfo}>
-          <Text style={styles.trackTitle} numberOfLines={1}>
-            {currentTrack.title}
-          </Text>
-          <Text style={styles.trackArtist} numberOfLines={1}>
-            {currentTrack.artist ?? 'Artista desconhecido'}
-          </Text>
-        </View>
-
-        {/* Slider de busca */}
-        <SeekSlider
-          progress={progress}
-          duration={duration}
-          position={position}
-          onSeek={seekTo}
-        />
-
-        {/* Controles */}
-        <View style={styles.controls}>
-          <TouchableOpacity
-            onPress={skipPrev}
-            style={styles.sideControl}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <IconPrev size={22} color={COLORS.text.primary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={isPlaying ? pause : play}
-            style={styles.playButton}
-            activeOpacity={0.85}
-          >
-            {isPlaying ? (
-              <IconPause size={26} color={COLORS.text.inverse} />
-            ) : (
-              <IconPlay size={28} color={COLORS.text.inverse} />
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={skipNext}
-            style={styles.sideControl}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <IconNext size={22} color={COLORS.text.primary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Ferramentas extras */}
-        <View style={styles.toolsRow}>
-          <TouchableOpacity onPress={toggleShuffle} style={[styles.toolBtn, shuffleEnabled && styles.toolBtnActive]}>
-            <Ionicons name="shuffle-outline" size={24} color={shuffleEnabled ? COLORS.white : COLORS.text.secondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={cycleRepeat} style={[styles.toolBtn, repeatMode !== 'off' && styles.toolBtnActive]}>
-            <Ionicons name={repeatMode === 'one' ? "repeat-outline" : "repeat-outline"} size={24} color={repeatMode !== 'off' ? COLORS.white : COLORS.text.secondary} />
-            {repeatMode === 'one' && (
-              <Text style={[styles.repeatBadge, { color: COLORS.white }]}>1</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => setShowEq(true)} style={styles.toolBtn}>
-            <Ionicons name="options-outline" size={24} color={COLORS.text.secondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => {
-              if (currentTrack?.lyrics) {
-                setShowLyrics(!showLyrics);
-              } else {
-                openLyricsEditor();
-              }
-            }}
-            style={[styles.toolBtn, showLyrics && styles.toolBtnActive]}
-          >
-            <Ionicons name="text-outline" size={24} color={showLyrics ? COLORS.white : COLORS.text.secondary} />
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={() => setShowSleepTimer(true)} style={styles.toolBtn}>
-            <Ionicons name="timer-outline" size={24} color={COLORS.text.secondary} />
-          </TouchableOpacity>
-        </View>
-
-        <EqualizerSheet visible={showEq} onClose={() => setShowEq(false)} />
-        <SleepTimerSheet visible={showSleepTimer} onClose={() => setShowSleepTimer(false)} />
-
-        {/* Editor de letras */}
-        <Modal
-          visible={showLyricsEditor}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setShowLyricsEditor(false)}
-        >
-          <View style={styles.lyricsModalBackdrop}>
-            <View style={styles.lyricsModalSheet}>
-              <Text style={styles.lyricsModalTitle}>Letras da música</Text>
-              <TextInput
-                style={styles.lyricsModalInput}
-                value={lyricsDraft}
-                onChangeText={setLyricsDraft}
-                placeholder="Cole as letras aqui (texto ou LRC)..."
-                placeholderTextColor={COLORS.text.tertiary}
-                multiline
-                textAlignVertical="top"
-              />
-              <View style={styles.lyricsModalButtons}>
-                <TouchableOpacity
-                  style={[styles.lyricsModalButton, styles.lyricsModalButtonGhost]}
-                  onPress={() => setShowLyricsEditor(false)}
-                >
-                  <Text style={styles.lyricsModalButtonGhostText}>Cancelar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.lyricsModalButton, styles.lyricsModalButtonPrimary]}
-                  onPress={handleSaveLyrics}
-                >
-                  <Text style={styles.lyricsModalButtonPrimaryText}>Salvar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
-
-        <SelectFolderModal
-          visible={showMoveFolder}
-          onClose={() => setShowMoveFolder(false)}
-          onSelect={handleMoveToFolder}
-          currentFolderId={currentFolderId}
-        />
-
-        {/* Spacer inferior */}
-        <View style={{ height: insets.bottom + SPACING.lg }} />
-      </Animated.View>
-    );
-  }
 
   // ═══════════════════════════════════════════════════════════════
   // LAYOUT PARA CELULAR (capa cheia, letras por toggle)
@@ -752,23 +552,6 @@ const styles = StyleSheet.create({
   coverInitial: {
     fontWeight: '700',
     color: COLORS.text.tertiary,
-  },
-
-  // ── Desktop: linha capa | letras ──
-  desktopRow: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: SPACING.xl,
-    alignItems: 'flex-start',
-    paddingHorizontal: SPACING.screenPadding,
-    paddingVertical: SPACING.xl,
-  },
-  desktopCoverCol: {
-    alignItems: 'center',
-  },
-  desktopLyricsCol: {
-    flex: 1,
-    minWidth: 260,
   },
 
   // ── Info da faixa ──
