@@ -5,7 +5,7 @@
 <h1 align="center">AplexSond</h1>
 
 <p align="center">
-  Um player de música moderno para Android, web e desktop, feito com React Native.
+  Um player de música moderno para Android e web, feito com React Native.
 </p>
 
 Seu player de música offline, privado e fluido. Sem anúncios, sem login e sem dependência de internet: as músicas, pastas, playlists e preferências ficam no próprio dispositivo.
@@ -26,7 +26,6 @@ Este projeto agora é totalmente offline e open source: não usa Firebase, conta
 - Cópia segura de arquivos temporários para armazenamento permanente
 - Recuperação de músicas do armazenamento do app
 - Suporte a Nova Arquitetura (Bridgeless)
-- Adaptação automática para telas grandes / desktop (Windows)
 - Interface totalmente offline e privada
 
 ## 🧰 Tech Stack
@@ -38,7 +37,7 @@ Este projeto agora é totalmente offline e open source: não usa Firebase, conta
 - **Motor de Áudio:** @rntp/player (player principal) & expo-av (leitura de áudio auxiliar)
 - **Armazenamento Local:** expo-file-system & @react-native-async-storage/async-storage
 - **Metadados:** jsmediatags (parse de ID3 tags de arquivos MP3/WAV)
-- **Desktop:** Electron + electron-builder (Windows)
+
 
 ## 🚀 Como Rodar o Projeto
 
@@ -72,15 +71,6 @@ npm install
 npm run web
 ```
 
-### Gerar instalador para Windows (Desktop)
-
-```bash
-npm install
-npm run desktop:build
-```
-
-O instalador será gerado em `desktop/release/`.
-
 ### Gerando o APK (EAS)
 
 ```bash
@@ -99,7 +89,6 @@ O projeto está em desenvolvimento ativo. As funcionalidades principais já fora
 - [x] Refatoração dos controles da UI do Player
 - [x] Implementação de notificações de mídia interativas em background
 - [x] Edição de letras por música
-- [x] Adaptação automática para desktop (Windows)
 - [ ] Sistema de equalização
 
 ## 📄 Licença

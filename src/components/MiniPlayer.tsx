@@ -31,11 +31,6 @@ export interface MiniPlayerProps {
   onNext: () => void;
   onPress: () => void;       // open full player
   onDismiss?: () => void;    // swipe down to close
-  /**
-   * Desktop: renderiza em fluxo (barra de player em baixo) em vez de
-   * flutuar sobre o conteúdo.
-   */
-  inline?: boolean;
 }
 
 // ─── Play/Pause icon (drawn manually — no icon lib dependency) ─
@@ -149,23 +144,20 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
   onNext,
   onPress,
   onDismiss,
-  inline = false,
 }) => {
   const insets = useSafeAreaInsets();
-  // No desktop o player fica em fluxo, então não precisa deslizar de baixo.
-  const translateY = useRef(new Animated.Value(inline ? 0 : 100)).current;
+  const translateY = useRef(new Animated.Value(100)).current;
   const swipeY = useRef(new Animated.Value(0)).current;
 
   // ── Mount animation ──
   useEffect(() => {
-    if (inline) return;
     Animated.spring(translateY, {
       toValue: 0,
       tension: 60,
       friction: 14,
       useNativeDriver: true,
     }).start();
-  }, [inline, translateY]);
+  }, [translateY]);
 
   // ── Swipe-down to dismiss ──
   const panResponder = useRef(
@@ -199,16 +191,14 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
     <Animated.View
       style={[
         styles.container,
-        inline
-          ? styles.containerInline
-          : [styles.containerFloating, { bottom: bottomOffset }],
+        { bottom: bottomOffset },
         {
           transform: [
             { translateY: Animated.add(translateY, swipeY) },
           ],
         },
       ]}
-      {...(inline ? {} : panResponder.panHandlers)}
+      {...panResponder.panHandlers}
     >
       {/* Progress bar — sits flush at the top edge */}
       <View style={styles.progressTrack}>
@@ -220,12 +210,10 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
         />
       </View>
 
-      {/* Handle — visual cue for swipe (somente no layout flutuante) */}
-      {!inline && (
-        <View style={styles.handleRow}>
-          <View style={styles.handle} />
-        </View>
-      )}
+      {/* Handle — visual cue for swipe */}
+      <View style={styles.handleRow}>
+        <View style={styles.handle} />
+      </View>
 
       {/* Main row */}
       <TouchableOpacity
@@ -300,6 +288,10 @@ const ARTWORK_SIZE = SIZES.cover.xs + 8;      // 44
 
 const styles = StyleSheet.create({
   container: {
+    position: 'absolute',
+    left: SPACING.md,
+    right: SPACING.md,
+    bottom: SPACING.md,
     height: PLAYER_HEIGHT,
     backgroundColor: COLORS.bg.overlay,
     borderRadius: RADIUS.lg,
@@ -309,21 +301,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: COLORS.border.default,
     zIndex: 50,
-  },
-
-  // ── Flutuante (mobile): sobreposto ao conteúdo ──
-  containerFloating: {
-    position: 'absolute',
-    left: SPACING.md,
-    right: SPACING.md,
-    bottom: SPACING.md,
-  },
-
-  // ── Em fluxo (desktop): barra de player em baixo ──
-  containerInline: {
-    borderRadius: RADIUS.none,
-    borderWidth: 0,
-    ...SHADOWS.none,
   },
 
   // ── Progress ──
