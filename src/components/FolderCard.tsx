@@ -28,6 +28,7 @@ export interface FolderCardProps {
   artwork?: string | null;     // custom folder photo (overrides collage)
   onPress: () => void;
   onLongPress?: () => void;
+  onDeleteFolder?: () => void;
   isReordering?: boolean;
   canMoveLeft?: boolean;
   canMoveRight?: boolean;
@@ -86,6 +87,7 @@ export const FolderCard: React.FC<FolderCardProps> = ({
   artwork,
   onPress,
   onLongPress,
+  onDeleteFolder,
   isReordering = false,
   canMoveLeft = false,
   canMoveRight = false,
@@ -172,7 +174,19 @@ export const FolderCard: React.FC<FolderCardProps> = ({
               />
             </TouchableOpacity>
           </View>
-        ) : null}
+        ) : (
+          <TouchableOpacity
+            onPress={() => onDeleteFolder?.()}
+            style={styles.menuButton}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons
+              name="ellipsis-vertical"
+              size={20}
+              color={COLORS.text.secondary}
+            />
+          </TouchableOpacity>
+        )}
 
         {/* Color accent strip at top (hidden when folder has its own photo) */}
         {!artwork && <View style={[styles.colorStrip, { backgroundColor: color }]} />}
@@ -242,6 +256,20 @@ const styles = StyleSheet.create({
   },
   reorderButtonDisabled: {
     opacity: 0.45,
+  },
+  menuButton: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.sm,
+    zIndex: 3,
+    width: 34,
+    height: 34,
+    borderRadius: RADIUS.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.68)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: COLORS.border.default,
   },
 
   // ── Color strip ──

@@ -7,6 +7,7 @@ import {
   StyleSheet,
   StatusBar,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -38,6 +39,7 @@ export const FoldersScreen: React.FC = () => {
 
   const folders      = useFoldersStore((s) => s.folders);
   const createFolder = useFoldersStore((s) => s.createFolder);
+  const deleteFolder = useFoldersStore((s) => s.deleteFolder);
   const reorderFolders = useFoldersStore((s) => s.reorderFolders);
   const tracks       = useLibraryStore((s) => s.tracks);
 
@@ -61,6 +63,26 @@ export const FoldersScreen: React.FC = () => {
       setShowCreate(false);
     },
     [createFolder],
+  );
+
+  const handleDeleteFolder = useCallback(
+    async (folderId: string, folderName: string) => {
+      await Alert.alert(
+        'Excluir pasta',
+        `Tem certeza que deseja excluir "${folderName}"? As músicas dentro dela continuarão na biblioteca, sem pasta.`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Excluir',
+            style: 'destructive',
+            onPress: async () => {
+              await deleteFolder(folderId);
+            },
+          },
+        ],
+      );
+    },
+    [deleteFolder],
   );
 
   const moveFolder = useCallback(
@@ -91,6 +113,7 @@ export const FoldersScreen: React.FC = () => {
             onMoveLeft={() => moveFolder(index, index - 1)}
             onMoveRight={() => moveFolder(index, index + 1)}
             onLongPress={() => setIsReordering(true)}
+            onDeleteFolder={() => handleDeleteFolder(item.id, item.name)}
             onPress={() => {
               if (isReordering) return;
               navigation.navigate('FolderDetails', { folderId: item.id, folderName: item.name });
@@ -99,7 +122,7 @@ export const FoldersScreen: React.FC = () => {
         </View>
       );
     },
-    [folders.length, getFolderArtworks, isReordering, moveFolder, navigation, tracks],
+    [folders.length, getFolderArtworks, isReordering, moveFolder, navigation, tracks, handleDeleteFolder],
   );
 
   const keyExtractor = useCallback((item: Folder) => item.id, []);

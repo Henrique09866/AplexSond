@@ -719,11 +719,10 @@ const styles = StyleSheet.create({
   },
   importButton: {
     backgroundColor: COLORS.accent.primary,
-    minWidth: 150,
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.button,
     ...SHADOWS.accentGlow,
