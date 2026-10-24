@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/images/logoaplexsond.png" alt="AplexSond Logo" width="250" style="border-radius: 50%; object-fit: cover;">
+  <img src="./assets/images/logoaplexsond.png" alt="AplexSond Logo" width="200" style="border-radius: 50%; object-fit: cover;">
 </p>
 
 <h1 align="center">AplexSond</h1>
@@ -8,13 +8,19 @@
   Um player de música moderno para Android e web, feito com React Native.
 </p>
 
+<p align="center">
+  <img alt="Licença" src="https://img.shields.io/github/license/Henrique09866/AplexSond?color=ff0000&style=for-the-badge">
+  <img alt="Ultimo commit" src="https://img.shields.io/github/last-commit/Henrique09866/AplexSond?style=for-the-badge">
+  <img alt="Status" src="https://img.shields.io/badge/status-em%20desenvolvimento-yellow?style=for-the-badge">
+</p>
+
 Seu player de música offline, privado e fluido. Sem anúncios, sem login e sem dependência de internet: as músicas, pastas, playlists e preferências ficam no próprio dispositivo.
 
 ## 💿 Sobre o Projeto
 
 O **AplexSond** é um aplicativo de reprodução de música offline desenvolvido com React Native (Expo SDK 54). O foco principal é fornecer uma experiência de audição limpa e rápida, gerenciando arquivos de áudio locais diretamente no dispositivo do usuário.
 
-Este projeto agora é totalmente offline e open source: não usa Firebase, contas ou sincronização em nuvem. Cada instalação é independente e os dados permanecem no aparelho.
+Este projeto é totalmente offline e open source: não usa Firebase, contas ou sincronização em nuvem. Cada instalação é independente e os dados permanecem no aparelho.
 
 ## ✨ Funcionalidades
 
@@ -38,7 +44,6 @@ Este projeto agora é totalmente offline e open source: não usa Firebase, conta
 - **Armazenamento Local:** expo-file-system & @react-native-async-storage/async-storage
 - **Metadados:** jsmediatags (parse de ID3 tags de arquivos MP3/WAV)
 
-
 ## 🚀 Como Rodar o Projeto
 
 ### Pré-requisitos
@@ -51,8 +56,8 @@ Este projeto agora é totalmente offline e open source: não usa Firebase, conta
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/Henrique09866/SondLize.git
-cd SondLize
+git clone https://github.com/Henrique09866/AplexSond.git
+cd AplexSond
 
 # 2. Instale as dependências
 npm install
@@ -77,6 +82,16 @@ npm run web
 eas build -p android --profile preview
 ```
 
+## 🤝 Como Contribuir
+
+Contribuições são bem-vindas! Leia nosso [guia de contribuição](CONTRIBUTING.md) para saber como enviar issues e pull requests.
+
+Por favor, siga nosso [Código de Conduta](CODE_OF_CONDUCT.md).
+
+## 🔒 Segurança
+
+Se você encontrou uma vulnerabilidade de segurança, leia nossa [política de segurança](SECURITY.md) antes de abrir uma issue pública.
+
 ## 📊 Status do Desenvolvimento (WIP)
 
 O projeto está em desenvolvimento ativo. As funcionalidades principais já foram implementadas, mas ajustes finos de UI/UX estão em andamento.
@@ -93,4 +108,4 @@ O projeto está em desenvolvimento ativo. As funcionalidades principais já fora
 
 ## 📄 Licença
 
-Este projeto é de uso pessoal e educacional.
+Este projeto está licenciado sob a [MIT License](LICENSE).

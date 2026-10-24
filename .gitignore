@@ -43,3 +43,21 @@ app-example
 # generated native folders
 /ios
 /android
+
+# build artifacts
+artifacts/
+*.apk
+
+# debug logs
+build-log.txt
+decoded-log.txt
+logcat.txt
+*.log
+
+# IDE
+.idea/
+*.iml
+*.bak
+
+# macOS
+.DS_Store
