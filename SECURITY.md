@@ -4,8 +4,8 @@
 
 | Versão | Suportada |
 |--------|-----------|
-| 1.23.x | ✅ Sim |
-| < 1.23 | ❌ Não |
+| 1.95.x | ✅ Sim |
+| < 1.95 | ❌ Não |
 
 ## Reportando uma Vulnerabilidade
 
