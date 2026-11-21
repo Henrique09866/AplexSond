@@ -118,6 +118,7 @@ export const LibraryScreen: React.FC = () => {
 
   const [query,   setQuery]   = useState('');
   const [filterMode, setFilterMode] = useState<LibraryFilter>('all');
+  const [sortBy, setSortBy] = useState<'title' | 'artist' | 'recent' | 'duration'>('title');
   const [loading, setLoading] = useState(false);
   const [pendingFolderTrackIds, setPendingFolderTrackIds] = useState<string[]>([]);
   const [showImportFolderPrompt, setShowImportFolderPrompt] = useState(false);
@@ -142,13 +143,27 @@ export const LibraryScreen: React.FC = () => {
       return true;
     });
 
-    if (!query.trim()) return byMode;
+    const result = query.trim()
+      ? byMode.filter((t) =>
+          SEARCH_FIELDS.some((field) => normalize(field(t)).includes(normalize(query.trim()))),
+        )
+      : byMode;
 
-    const q = normalize(query.trim());
-    return byMode.filter((t) =>
-      SEARCH_FIELDS.some((field) => normalize(field(t)).includes(q)),
-    );
-  }, [filterMode, tracks, query]);
+    const sorted = [...result].sort((a, b) => {
+      switch (sortBy) {
+        case 'artist':
+          return (a.artist || '').localeCompare(b.artist || '', 'pt-BR');
+        case 'recent':
+          return (b.lastPlayedAt ?? b.createdAt) - (a.lastPlayedAt ?? a.createdAt);
+        case 'duration':
+          return (b.duration || 0) - (a.duration || 0);
+        case 'title':
+        default:
+          return (a.title || '').localeCompare(b.title || '', 'pt-BR');
+      }
+    });
+    return sorted;
+  }, [filterMode, tracks, query, sortBy]);
 
   // ── Import ──
   const handleImport = useCallback(async () => {
@@ -317,6 +332,21 @@ export const LibraryScreen: React.FC = () => {
             clearButtonMode="while-editing"
           />
         </View>
+        <TouchableOpacity
+          style={styles.sortButton}
+          onPress={() => {
+            const order: Array<'title' | 'artist' | 'recent' | 'duration'> = ['title', 'artist', 'recent', 'duration'];
+            const idx = order.indexOf(sortBy);
+            setSortBy(order[(idx + 1) % order.length]);
+          }}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel="Ordenar"
+        >
+          <Ionicons name="swap-vertical" size={20} color={COLORS.text.primary} />
+          <Text style={styles.sortLabel}>
+            {sortBy === 'title' ? 'Nome' : sortBy === 'artist' ? 'Artista' : sortBy === 'recent' ? 'Recentes' : 'Duração'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* ── Filter chips ── */}
@@ -728,8 +758,27 @@ const styles = StyleSheet.create({
 
   // ── Search ──
   searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: SPACING.screenPadding,
     marginBottom: SPACING.md,
+    gap: SPACING.sm,
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: SPACING.sm,
+    height: 48,
+    borderRadius: RADIUS.input,
+    backgroundColor: COLORS.bg.input,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: COLORS.border.default,
+  },
+  sortLabel: {
+    ...TYPOGRAPHY.label,
+    color: COLORS.text.primary,
+    fontWeight: '600',
   },
   searchContainer: {
     flexDirection: 'row',
