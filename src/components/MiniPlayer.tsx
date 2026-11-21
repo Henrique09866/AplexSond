@@ -7,8 +7,10 @@ import {
   Animated,
   StyleSheet,
   PanResponder,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import {
   COLORS,
   TYPOGRAPHY,
@@ -200,6 +202,15 @@ export const MiniPlayer: React.FC<MiniPlayerProps> = ({
       ]}
       {...panResponder.panHandlers}
     >
+      <BlurView
+        intensity={60}
+        tint="dark"
+        experimentalBlurMethod="dimezisBlurView"
+        blurReductionFactor={4}
+        style={StyleSheet.absoluteFill}
+      />
+      <View style={styles.glassOverlay} pointerEvents="none" />
+
       {/* Progress bar — sits flush at the top edge */}
       <View style={styles.progressTrack}>
         <Animated.View
@@ -293,14 +304,18 @@ const styles = StyleSheet.create({
     right: SPACING.md,
     bottom: SPACING.md,
     height: PLAYER_HEIGHT,
-    backgroundColor: COLORS.bg.overlay,
+    backgroundColor: Platform.OS === 'android' ? 'rgba(8,8,8,0.75)' : 'transparent',
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
     ...SHADOWS.float,
     // Subtle border for definition against dark bg
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.border.default,
+    borderColor: 'rgba(255,255,255,0.10)',
     zIndex: 50,
+  },
+  glassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(8,8,8,0.35)',
   },
 
   // ── Progress ──
