@@ -11,6 +11,7 @@ import {
   FlatList,
 } from 'react-native';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SIZES } from '../constants/theme';
+import { BlurView } from 'expo-blur';
 import { FOLDER_COLORS } from '../constants/folderColors';
 import { PrimaryButton } from './PrimaryButton';
 
@@ -48,6 +49,13 @@ export const CreateFolderModal: React.FC<CreateFolderModalProps> = ({
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.sheet}>
+          <BlurView
+            intensity={50}
+            tint="dark"
+            experimentalBlurMethod="dimezisBlurView"
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.sheetGlassOverlay} pointerEvents="none" />
           <View style={styles.handle} />
 
           <Text style={styles.heading}>{title}</Text>
@@ -109,11 +117,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.6)',
   },
   sheet: {
-    backgroundColor: COLORS.bg.overlay,
+    backgroundColor: 'rgba(8,8,8,0.72)',
     borderTopLeftRadius: RADIUS.sheet,
     borderTopRightRadius: RADIUS.sheet,
     padding: SPACING.lg,
     paddingBottom: SPACING['2xl'],
+    overflow: 'hidden',
+  },
+  sheetGlassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.04)',
   },
   handle: {
     width: SIZES.sheet.handleWidth,
