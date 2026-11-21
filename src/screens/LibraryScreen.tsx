@@ -14,18 +14,17 @@ import {
   ActivityIndicator,
   FlatList as RNFlatList,
   Animated,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { SongListItem } from '../components/SongListItem';
-import { UserAvatar } from '../components/UserAvatar';
 import { EmptyState } from '../components/EmptyState';
 import { CreateFolderModal } from '../components/CreateFolderModal';
 import { SelectFolderModal } from '../components/SelectFolderModal';
 import { Playlist, useFoldersStore, useLibraryStore, usePlayerStore, usePlaylistsStore } from '../store';
-import { useAuthStore } from '../store/useAuthStore';
 import { Track } from '../core/entities';
 import {
   COLORS,
@@ -116,8 +115,6 @@ export const LibraryScreen: React.FC = () => {
   const isPlaying    = usePlayerStore((s) => s.isPlaying);
   const playQueue    = usePlayerStore((s) => s.playQueue);
   const pause        = usePlayerStore((s) => s.pause);
-
-  const profile = useAuthStore((s) => s.profile);
 
   const [query,   setQuery]   = useState('');
   const [filterMode, setFilterMode] = useState<LibraryFilter>('all');
@@ -268,31 +265,17 @@ export const LibraryScreen: React.FC = () => {
     <View>
       {/* ── Page title ── */}
       <View style={[styles.header, { paddingTop: insets.top + SPACING.md }]}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Profile')}
-            style={styles.profileButton}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityRole="button"
-            accessibilityLabel="Perfil"
-          >
-            <UserAvatar
-              photoURL={profile?.photoURL}
-              initial={(profile?.displayName || 'AplexSond')
-                .trim()
-                .charAt(0)
-                .toUpperCase()}
-              size={SIZES.avatar.md}
-              crop={profile?.crop}
-            />
-          </TouchableOpacity>
+        <Image
+          source={require('../../assets/images/logoaplexsond.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
 
-          <View style={styles.titleWrapper}>
-            <Text style={styles.pageTitle}>Sua Biblioteca</Text>
-            <Text style={styles.pageSubtitle}>
-              Aqui ficam todas as suas músicas, organizadas do seu jeito.
-            </Text>
-          </View>
+        <View style={styles.titleWrapper}>
+          <Text style={styles.pageTitle}>Sua Biblioteca</Text>
+          <Text style={styles.pageSubtitle}>
+            Aqui ficam todas as suas músicas, organizadas do seu jeito.
+          </Text>
         </View>
 
         <TouchableOpacity
@@ -305,11 +288,18 @@ export const LibraryScreen: React.FC = () => {
           {loading ? (
             <ActivityIndicator size="small" color={COLORS.text.onAccent} />
           ) : (
-            <View style={styles.buttonContent}>
-              <Ionicons name="add" size={18} color={COLORS.text.onAccent} />
-              <Text style={styles.importButtonText}>Adicionar músicas</Text>
-            </View>
+            <Ionicons name="add" size={26} color={COLORS.text.onAccent} />
           )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Settings')}
+          style={styles.settingsButton}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityRole="button"
+          accessibilityLabel="Configurações"
+        >
+          <Ionicons name="settings-outline" size={22} color={COLORS.text.primary} />
         </TouchableOpacity>
       </View>
 
@@ -691,54 +681,49 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.screenPadding,
-    paddingBottom: SPACING.xl,
-    gap: SPACING.md,
+    paddingBottom: SPACING.lg,
+    gap: SPACING.sm,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
+  logo: {
+    width: 34,
+    height: 34,
+    borderRadius: RADIUS.avatar,
+    flexShrink: 0,
   },
   titleWrapper: {
     flex: 1,
+    minWidth: 0,
   },
   pageTitle: {
-    ...TYPOGRAPHY.h1,
+    ...TYPOGRAPHY.h2,
+    fontSize: 22,
   },
   pageSubtitle: {
-    ...TYPOGRAPHY.body,
+    ...TYPOGRAPHY.caption,
     color: COLORS.text.secondary,
     marginTop: 2,
   },
-  profileButton: {
-    width: SIZES.avatar.md,
-    height: SIZES.avatar.md,
+  settingsButton: {
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.avatar,
-    overflow: 'hidden',
-    backgroundColor: COLORS.bg.highlight,
-  },
-  importButton: {
-    backgroundColor: COLORS.accent.primary,
-    minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.button,
+    backgroundColor: COLORS.bg.highlight,
+    flexShrink: 0,
+  },
+  importButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.accent.primary,
+    flexShrink: 0,
     ...SHADOWS.accentGlow,
   },
   importButtonLoading: {
     opacity: 0.7,
-  },
-  importButtonText: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.text.onAccent,
-    fontWeight: '700',
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
   },
 
   // ── Search ──

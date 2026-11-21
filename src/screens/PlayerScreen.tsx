@@ -279,14 +279,6 @@ export const PlayerScreen: React.FC = () => {
     </Animated.View>
   );
 
-  const renderLyricsPanel = () => (
-    <LyricsView
-      lyrics={currentTrack.lyrics || ''}
-      position={position}
-      onEdit={openLyricsEditor}
-    />
-  );
-
   // ═══════════════════════════════════════════════════════════════
   // LAYOUT PARA CELULAR (capa cheia, letras por toggle)
   // ═══════════════════════════════════════════════════════════════

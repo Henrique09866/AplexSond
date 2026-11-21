@@ -68,6 +68,8 @@ const MAX_TICK_DELTA = 120; // segundos por tick (evita contagens absurdas)
 const DEFAULT_EQ_BANDS = [0, 0, 0, 0, 0];
 let lastPlaybackTick = Date.now();
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
+let endedAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
+let lastSeekAt = 0;
 
 type PlayerPrefs = {
   listenedSeconds?: number;
@@ -119,10 +121,16 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     listenersBound = true;
 
     TrackPlayer.addEventListener(Event.MediaItemTransition, ({ item, index }) => {
+      // Native advanced to another track — cancel any pending manual advance.
+      if (endedAdvanceTimer) {
+        clearTimeout(endedAdvanceTimer);
+        endedAdvanceTimer = null;
+      }
       set({
-        currentIndex: index,
-        currentTrack: item?.mediaId ? findTrackByMediaId(item.mediaId) : null,
+        currentIndex: index ?? get().currentIndex,
+        currentTrack: item?.mediaId ? findTrackByMediaId(item.mediaId) : get().currentTrack,
         position: 0,
+        isPlaying: true,
       });
     });
 
@@ -136,10 +144,51 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       set({ isLoading: state === PlaybackState.Buffering });
       if (state === PlaybackState.Ended) {
         set({ isPlaying: false });
+        const endedIndex = get().currentIndex;
+        if (endedAdvanceTimer) clearTimeout(endedAdvanceTimer);
+        endedAdvanceTimer = setTimeout(() => {
+          endedAdvanceTimer = null;
+          // If native already advanced (index changed), do nothing.
+          if (get().currentIndex !== endedIndex) return;
+          const { queue, repeatMode, shuffleEnabled, currentTrack } = get();
+          if (!queue.length || !currentTrack) return;
+          let nextIndex = -1;
+          if (repeatMode === 'one') {
+            nextIndex = endedIndex >= 0 ? endedIndex : 0;
+          } else if (shuffleEnabled) {
+            if (queue.length <= 1) return;
+            do {
+              nextIndex = Math.floor(Math.random() * queue.length);
+            } while (nextIndex === endedIndex);
+          } else {
+            nextIndex = endedIndex + 1;
+            if (nextIndex >= queue.length) {
+              if (repeatMode === 'all') nextIndex = 0;
+              else {
+                try { TrackPlayer.stop(); } catch {}
+                set({ isPlaying: false });
+                return;
+              }
+            }
+          }
+          if (nextIndex < 0 || nextIndex >= queue.length) return;
+          try {
+            TrackPlayer.skipToIndex(nextIndex);
+            TrackPlayer.play();
+          } catch (e) {
+            console.warn('[usePlayerStore] Falha ao avançar faixa:', e);
+          }
+        }, 400);
       }
     });
 
     TrackPlayer.addEventListener(Event.PlaybackProgressUpdated, ({ position, duration }) => {
+      // Ignora posições reportadas logo após um seek, pois podem ser stale
+      // (anteriores ao seek) e fariam o slider "voltar".
+      if (Date.now() - lastSeekAt < 1200) {
+        set({ duration: duration || get().duration });
+        return;
+      }
       set({ position, duration });
 
       if (get().isPlaying) {
@@ -264,7 +313,13 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     },
 
     seekTo: (seconds) => {
-      TrackPlayer.seekTo(seconds);
+      lastSeekAt = Date.now();
+      set({ position: seconds });
+      try {
+        TrackPlayer.seekTo(seconds);
+      } catch (e) {
+        console.warn('[usePlayerStore] Falha ao buscar posição:', e);
+      }
     },
 
     removeTrackFromQueue: (trackId) => {

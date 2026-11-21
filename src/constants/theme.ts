@@ -514,17 +514,4 @@ export const contrastText = (bgHex: string): string => {
   return luminance > 0.5 ? COLORS.black : COLORS.text.primary;
 };
  
-// ─── Legacy Compatibility ────────────────────────────────────
-// Keeps old `import { THEME as OLD_THEME }` calls from breaking
-// while migrating screen by screen.
- 
-/** @deprecated Use COLORS directly */
-export const LEGACY_THEME = {
-  background:    COLORS.bg.base,
-  surface:       COLORS.bg.surface,
-  card:          COLORS.bg.overlay,
-  accent:        COLORS.accent.primary,
-  textPrimary:   COLORS.text.primary,
-  textSecondary: COLORS.text.secondary,
-  border:        COLORS.border.default,
-};
+

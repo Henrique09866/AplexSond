@@ -104,6 +104,11 @@ O projeto está em desenvolvimento ativo. As funcionalidades principais já fora
 - [x] Refatoração dos controles da UI do Player
 - [x] Implementação de notificações de mídia interativas em background
 - [x] Edição de letras por música
+- [x] Barra inferior com efeito Glass (Glassmorphism) e animações fluidas
+- [x] Cabeçalho da Biblioteca reorganizado (logo, título, botão circular de adicionar)
+- [x] Avanço automático de faixas (fila, playlists e shuffle)
+- [x] MiniPlayer colapsável para economizar espaço
+- [x] Correção do seek (slider não "volta" mais)
 - [ ] Sistema de equalização
 
 ## 📄 Licença
