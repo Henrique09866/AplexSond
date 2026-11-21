@@ -10,6 +10,7 @@ import {
   FlatList,
 } from 'react-native';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../constants/theme';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useFoldersStore } from '../store';
 
@@ -48,6 +49,13 @@ export const SelectFolderModal: React.FC<SelectFolderModalProps> = ({
         <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose} />
         
         <View style={styles.content}>
+          <BlurView
+            intensity={50}
+            tint="dark"
+            experimentalBlurMethod="dimezisBlurView"
+            style={StyleSheet.absoluteFill}
+          />
+          <View style={styles.sheetGlassOverlay} pointerEvents="none" />
           <View style={styles.header}>
             <Text style={styles.title}>{title}</Text>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}>
@@ -119,11 +127,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   content: {
-    backgroundColor: COLORS.bg.overlay,
+    backgroundColor: 'rgba(8,8,8,0.72)',
     borderTopLeftRadius: RADIUS.sheet,
     borderTopRightRadius: RADIUS.sheet,
     padding: SPACING.lg,
     maxHeight: '80%',
+    overflow: 'hidden',
+  },
+  sheetGlassOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255,255,255,0.04)',
   },
   header: {
     flexDirection: 'row',
