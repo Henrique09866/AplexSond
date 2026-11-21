@@ -17,6 +17,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { SleepTimerSheet } from '../components/SleepTimerSheet';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useLibraryStore } from '../store/useLibraryStore';
+import { useFoldersStore } from '../store/useFoldersStore';
+import { usePlaylistsStore } from '../store/usePlaylistsStore';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+import * as DocumentPicker from 'expo-document-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   getNotificationsEnabled,
   setNotificationsEnabled,
@@ -83,6 +89,81 @@ export const SettingsScreen: React.FC = () => {
   const [notificationsOn, setNotificationsOn] = useState(true);
 
   const [showSleepTimer, setShowSleepTimer] = useState(false);
+  const [backupLoading, setBackupLoading] = useState(false);
+
+  const handleBackup = async () => {
+    setBackupLoading(true);
+    try {
+      const tracks = useLibraryStore.getState().tracks;
+      const folders = useFoldersStore.getState().folders;
+      const playlists = usePlaylistsStore.getState().playlists;
+      const payload = {
+        version: 1,
+        exportedAt: Date.now(),
+        tracks,
+        folders,
+        playlists,
+      };
+      const path = `${FileSystem.documentDirectory}sondlize-backup-${Date.now()}.json`;
+      await FileSystem.writeAsStringAsync(path, JSON.stringify(payload), {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(path, { mimeType: 'application/json' });
+      } else {
+        Alert.alert('Backup criado', `Arquivo salvo em:\n${path}`);
+      }
+    } catch (e: any) {
+      Alert.alert('Erro no backup', e?.message ?? 'Falha ao criar backup.');
+    } finally {
+      setBackupLoading(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/json', 'text/plain', '*/*'],
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled || !result.assets?.length) return;
+      const asset = result.assets[0];
+      const content = await FileSystem.readAsStringAsync(asset.uri, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      const data = JSON.parse(content);
+      if (!data || !Array.isArray(data.tracks)) {
+        Alert.alert('Backup inválido', 'O arquivo não parece ser um backup do SondLize.');
+        return;
+      }
+      Alert.alert(
+        'Restaurar backup',
+        `Isso substituirá sua biblioteca atual por ${data.tracks.length} músicas, ${data.folders?.length ?? 0} pastas e ${data.playlists?.length ?? 0} playlists. Continuar?`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          {
+            text: 'Restaurar',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await AsyncStorage.setItem('@sondlize:library', JSON.stringify(data.tracks ?? []));
+                await AsyncStorage.setItem('@sondlize:folders', JSON.stringify(data.folders ?? []));
+                await AsyncStorage.setItem('@sondlize:playlists', JSON.stringify(data.playlists ?? []));
+                await useLibraryStore.getState().loadTracks();
+                await useFoldersStore.getState().load();
+                await usePlaylistsStore.getState().hydrate();
+                Alert.alert('Restaurado', 'Backup restaurado com sucesso.');
+              } catch (e: any) {
+                Alert.alert('Erro ao restaurar', e?.message ?? 'Falha na restauração.');
+              }
+            },
+          },
+        ],
+      );
+    } catch (e: any) {
+      Alert.alert('Erro', e?.message ?? 'Falha ao selecionar arquivo.');
+    }
+  };
 
   useEffect(() => {
     getNotificationsEnabled().then(setNotificationsOn);
@@ -170,6 +251,23 @@ export const SettingsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.pageTitle}>Configurações</Text>
+
+        {/* ── Dados ── */}
+        <SectionLabel>DADOS</SectionLabel>
+        <View style={styles.group}>
+          <Row
+            label="Fazer backup"
+            icon="cloud-upload-outline"
+            value={backupLoading ? 'Gerando…' : 'Exportar biblioteca'}
+            onPress={backupLoading ? undefined : handleBackup}
+          />
+          <Row
+            label="Restaurar backup"
+            icon="cloud-download-outline"
+            value="Importar arquivo JSON"
+            onPress={handleRestore}
+          />
+        </View>
 
         {/* ── Conta ── */}
         <SectionLabel>CONTA</SectionLabel>
