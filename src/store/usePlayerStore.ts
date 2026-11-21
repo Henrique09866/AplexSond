@@ -278,16 +278,12 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     playQueueShuffled: async (tracks) => {
       if (!tracks.length) return;
 
-      // Embaralha a fila em JS e toca na ordem embaralhada,
-      // evitando que o shuffle nativo embaralhe de novo por cima.
-      const shuffled = [...tracks];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-
-      set({ shuffleEnabled: false });
-      await get().playQueue(shuffled, 0);
+      // Usa o shuffle nativo do player (consistente com toggleShuffle),
+      // evitando dois mecanismos de embaralhamento concorrentes.
+      set({ shuffleEnabled: true });
+      get().syncPreferences();
+      await get().playQueue(tracks, 0);
+      TrackPlayer.setShuffleEnabled(true);
     },
 
     skipNext: () => {
@@ -374,21 +370,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     },
 
     toggleShuffle: () => {
-      const { shuffleEnabled, originalQueue, currentTrack } = get();
+      const { shuffleEnabled } = get();
       const next = !shuffleEnabled;
       set({ shuffleEnabled: next });
       get().syncPreferences();
-
       TrackPlayer.setShuffleEnabled(next);
-
-      // Ao desligar o shuffle, restaura a ordem original mantendo a faixa atual
-      if (!next && currentTrack) {
-        const newIndex = Math.max(
-          0,
-          originalQueue.findIndex((t) => t.id === currentTrack.id)
-        );
-        set({ queue: originalQueue, currentIndex: newIndex });
-      }
     },
 
     cycleRepeat: () => {
