@@ -85,6 +85,9 @@ export const SettingsScreen: React.FC = () => {
   const sleepTimerEnd = usePlayerStore((s) => s.sleepTimerEnd);
 
   const rescanMusic = useLibraryStore((s) => s.rescanMusic);
+  const tracks = useLibraryStore((s) => s.tracks);
+  const folders = useFoldersStore((s) => s.folders);
+  const playlists = usePlaylistsStore((s) => s.playlists);
 
   const [notificationsOn, setNotificationsOn] = useState(true);
 
@@ -251,6 +254,19 @@ export const SettingsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.pageTitle}>Configurações</Text>
+
+        {/* ── Estatísticas ── */}
+        <SectionLabel>ESTATÍSTICAS</SectionLabel>
+        <View style={styles.group}>
+          <Row label="Músicas" icon="musical-notes-outline" value={String(tracks.length)} />
+          <Row label="Pastas" icon="folder-outline" value={String(folders.length)} />
+          <Row label="Playlists" icon="list-outline" value={String(playlists.length)} />
+          <Row
+            label="Já tocadas"
+            icon="play-circle-outline"
+            value={String(tracks.filter((t) => !!t.lastPlayedAt).length)}
+          />
+        </View>
 
         {/* ── Dados ── */}
         <SectionLabel>DADOS</SectionLabel>
