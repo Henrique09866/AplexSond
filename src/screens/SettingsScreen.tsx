@@ -14,7 +14,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { EqualizerSheet } from '../components/EqualizerSheet';
 import { SleepTimerSheet } from '../components/SleepTimerSheet';
 import { usePlayerStore } from '../store/usePlayerStore';
 import { useLibraryStore } from '../store/useLibraryStore';
@@ -82,7 +81,7 @@ export const SettingsScreen: React.FC = () => {
   const rescanMusic = useLibraryStore((s) => s.rescanMusic);
 
   const [notificationsOn, setNotificationsOn] = useState(true);
-  const [showEq, setShowEq] = useState(false);
+
   const [showSleepTimer, setShowSleepTimer] = useState(false);
 
   useEffect(() => {
@@ -192,7 +191,6 @@ export const SettingsScreen: React.FC = () => {
             value={formatListenedTime(listenedSeconds)}
             onPress={handleResetListening}
           />
-          <Row label="Equalizador" icon="options-outline" onPress={() => setShowEq(true)} />
           <Row
             label="Timer (sleep)"
             icon="moon-outline"
@@ -252,7 +250,6 @@ export const SettingsScreen: React.FC = () => {
 
       </ScrollView>
 
-      <EqualizerSheet visible={showEq} onClose={() => setShowEq(false)} />
       <SleepTimerSheet visible={showSleepTimer} onClose={() => setShowSleepTimer(false)} />
     </View>
   );

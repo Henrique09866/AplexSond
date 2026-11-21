@@ -40,11 +40,6 @@ interface PlayerState {
   loadPreferences: () => Promise<void>;
   syncPreferences: () => Promise<void>;
 
-  // Equalizer
-  eqPreset: string;
-  eqBands: number[]; // 5 bands
-  setEqPreset: (preset: string, bands?: number[]) => void;
-  setEqBand: (index: number, value: number) => void;
 
   // Actions
   initListeners: () => Promise<void>;
@@ -65,7 +60,6 @@ let listenersBound = false;
 const LISTENED_KEY = '@sondlize:listenedSeconds';
 const PLAYER_PREFS_KEY = '@sondlize:playerPrefs';
 const MAX_TICK_DELTA = 120; // segundos por tick (evita contagens absurdas)
-const DEFAULT_EQ_BANDS = [0, 0, 0, 0, 0];
 let lastPlaybackTick = Date.now();
 let persistTimer: ReturnType<typeof setTimeout> | null = null;
 let endedAdvanceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -74,8 +68,6 @@ let lastSeekAt = 0;
 type PlayerPrefs = {
   listenedSeconds?: number;
   shuffleEnabled?: boolean;
-  eqPreset?: string;
-  eqBands?: number[];
 };
 
 const persistPlayerPrefsLocal = async (prefs: PlayerPrefs) => {
@@ -248,8 +240,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     shuffleEnabled: false,
     repeatMode: 'off',
     sleepTimerEnd: null,
-    eqPreset: 'Flat',
-    eqBands: DEFAULT_EQ_BANDS,
     listenedSeconds: 0,
 
     initListeners: async () => {
@@ -439,27 +429,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
       await get().syncPreferences();
     },
 
-    setEqPreset: (preset, bands) => {
-      if (bands) set({ eqPreset: preset, eqBands: bands });
-      else set({ eqPreset: preset });
-      get().syncPreferences();
-    },
-
-    setEqBand: (index, value) => {
-      const { eqBands } = get();
-      const newBands = [...eqBands];
-      newBands[index] = value;
-      set({ eqBands: newBands, eqPreset: 'Custom' });
-      get().syncPreferences();
-    },
-
     loadPreferences: async () => {
       // Redefine para padrões antes de ler o cache local.
       set({
         listenedSeconds: 0,
         shuffleEnabled: false,
-        eqPreset: 'Flat',
-        eqBands: DEFAULT_EQ_BANDS,
       });
 
       let localPrefs: PlayerPrefs = {};
@@ -477,10 +451,6 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
         set({
           listenedSeconds: Number.isFinite(listenedSeconds) ? listenedSeconds : 0,
           shuffleEnabled: localPrefs.shuffleEnabled ?? false,
-          eqPreset: localPrefs.eqPreset ?? 'Flat',
-          eqBands: Array.isArray(localPrefs.eqBands) && localPrefs.eqBands.length === 5
-            ? localPrefs.eqBands
-            : DEFAULT_EQ_BANDS,
         });
       } catch {
         set({ listenedSeconds: 0 });
@@ -488,12 +458,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
     },
 
     syncPreferences: async () => {
-      const { listenedSeconds, shuffleEnabled, eqPreset, eqBands } = get();
+      const { listenedSeconds, shuffleEnabled } = get();
       const prefs: PlayerPrefs = {
         listenedSeconds,
         shuffleEnabled,
-        eqPreset,
-        eqBands,
       };
 
       await persistPlayerPrefsLocal(prefs).catch(() => {});

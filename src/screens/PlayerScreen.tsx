@@ -19,7 +19,6 @@ import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 
 import { LyricsView } from '../components/LyricsView';
-import { EqualizerSheet } from '../components/EqualizerSheet';
 import { SleepTimerSheet } from '../components/SleepTimerSheet';
 import { SelectFolderModal } from '../components/SelectFolderModal';
 
@@ -163,7 +162,7 @@ export const PlayerScreen: React.FC = () => {
   const cycleRepeat   = usePlayerStore((s) => s.cycleRepeat);
 
   const [showLyrics, setShowLyrics] = useState(false);
-  const [showEq, setShowEq] = useState(false);
+
   const [showSleepTimer, setShowSleepTimer] = useState(false);
   const [showMoveFolder, setShowMoveFolder] = useState(false);
   const [showLyricsEditor, setShowLyricsEditor] = useState(false);
@@ -394,10 +393,6 @@ export const PlayerScreen: React.FC = () => {
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setShowEq(true)} style={styles.toolBtn}>
-          <Ionicons name="options-outline" size={24} color={COLORS.text.secondary} />
-        </TouchableOpacity>
-
         <TouchableOpacity
           onPress={() => {
             if (currentTrack?.lyrics) {
@@ -416,7 +411,6 @@ export const PlayerScreen: React.FC = () => {
         </TouchableOpacity>
       </View>
 
-      <EqualizerSheet visible={showEq} onClose={() => setShowEq(false)} />
       <SleepTimerSheet visible={showSleepTimer} onClose={() => setShowSleepTimer(false)} />
 
       {/* Editor de letras */}
