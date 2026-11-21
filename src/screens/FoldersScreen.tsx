@@ -40,6 +40,7 @@ export const FoldersScreen: React.FC = () => {
   const folders      = useFoldersStore((s) => s.folders);
   const createFolder = useFoldersStore((s) => s.createFolder);
   const deleteFolder = useFoldersStore((s) => s.deleteFolder);
+  const updateTrackFolder = useLibraryStore((s) => s.updateTrackFolder);
   const reorderFolders = useFoldersStore((s) => s.reorderFolders);
   const tracks       = useLibraryStore((s) => s.tracks);
 
@@ -76,13 +77,15 @@ export const FoldersScreen: React.FC = () => {
             text: 'Excluir',
             style: 'destructive',
             onPress: async () => {
+              const affected = tracks.filter((t) => t.folderId === folderId);
+              await Promise.all(affected.map((t) => updateTrackFolder(t.id, undefined)));
               await deleteFolder(folderId);
             },
           },
         ],
       );
     },
-    [deleteFolder],
+    [deleteFolder, tracks, updateTrackFolder],
   );
 
   const moveFolder = useCallback(
