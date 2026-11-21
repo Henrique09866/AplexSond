@@ -126,12 +126,23 @@ export const usePlayerStore = create<PlayerState>((set, get) => {
         clearTimeout(endedAdvanceTimer);
         endedAdvanceTimer = null;
       }
+      const mediaId = item?.mediaId;
       set({
         currentIndex: index ?? get().currentIndex,
-        currentTrack: item?.mediaId ? findTrackByMediaId(item.mediaId) : get().currentTrack,
+        currentTrack: mediaId ? findTrackByMediaId(mediaId) : get().currentTrack,
         position: 0,
         isPlaying: true,
       });
+      // Atualiza "lastPlayedAt" para a tela de Recentes, sem import circular.
+      if (mediaId) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-var-requires
+          const { useLibraryStore } = require('../store/useLibraryStore');
+          useLibraryStore.getState().markTrackPlayed(mediaId);
+        } catch {
+          // Ignora se o store não estiver disponível.
+        }
+      }
     });
 
     TrackPlayer.addEventListener(Event.IsPlayingChanged, ({ playing }) => {
